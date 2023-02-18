@@ -23,6 +23,12 @@ const HandleValidationErrorDb = (err) => {
   return new AppError(message, 400);
 };
 
+const HandleJWTError = () =>
+  new AppError('This token is invalid, please log in again', 401);
+
+const HandleJWTExpired = () =>
+  new AppError('This token is expired, please log in again', 401);
+
 const SendDevError = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -60,13 +66,14 @@ module.exports = (err, req, res, next) => {
   else if (process.env.NODE_ENV === 'production') {
     let error = { ...err };
 
-    if (err.IsOperational)
-      return SendProdError(err, res);
+    if (err.IsOperational) return SendProdError(err, res);
 
-    // console.log(error);
+    console.log(error);
     if (error.name === 'CastError') error = HandleCastErrorDb(error);
-    else if (error.code === 11000) error = HandleDuplicateFieldsDb(error);
-    else if (error._message.startsWith('User validation failed'))
+    if (error.code === 11000) error = HandleDuplicateFieldsDb(error);
+    if (error.name === 'JsonWebTokenError') error = HandleJWTError();
+    if (error.name === 'TokenExpiredError') error = HandleJWTExpired();
+    if (error._message && error._message.startsWith('User validation failed'))
       error = HandleValidationErrorDb(error);
 
     SendProdError(error, res);
