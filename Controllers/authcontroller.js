@@ -10,25 +10,36 @@ const signToken = (id) => {
   });
 };
 
+const respond = (res, statusCode, user, token) => {
+  if (process.env.NODE_ENV === 'development') {
+    res.status(statusCode).json({
+      status: 'success',
+      token,
+      data: { user },
+    });
+  } else {
+    res.status(statusCode).json({
+      status: 'success',
+      token,
+    });
+  }
+};
+
 exports.signup = CatchAsync(async (req, res, next) => {
   // console.log(req);
   const newUser = await User.create({
     email: req.body.email,
     password: req.body.password,
     ConfirmPassword: req.body.ConfirmPassword,
+    FirstName: req.body.FirstName,
+    LastName: req.body.LastName,
+    PhoneNumber: req.body.PhoneNumber,
     PasswordChangedAt: new Date(),
   });
 
   // newUser.save();
   const token = signToken(newUser._id);
-
-  res.status(201).json({
-    status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  respond(res, 201, newUser, token);
 });
 
 exports.login = CatchAsync(async (req, res, next) => {
@@ -44,10 +55,7 @@ exports.login = CatchAsync(async (req, res, next) => {
   }
 
   const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  respond(res, 200, user, token);
 });
 
 exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
@@ -79,7 +87,7 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
     return next(
       new AppError('User has changed password. Please log in again', 401)
     );
-  
+
   req.user = CurrentUser;
   next();
 });

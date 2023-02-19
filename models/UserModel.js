@@ -4,6 +4,19 @@ const bcrypt = require('bcryptjs');
 
 // Schema
 const UserSchema = new mongoose.Schema({
+  FirstName: {
+    type: String,
+    required: [true, 'Please provide a first name'],
+  },
+  LastName: {
+    type: String,
+    required: [true, 'Please provide a last name'],
+  },
+  PhoneNumber: {
+    type: String,
+    required: [true, 'Please provide a phone number'],
+    unique: true,
+  },
   email: {
     type: String,
     required: [true, 'Please provide an email'],
@@ -51,6 +64,7 @@ UserSchema.methods.correctPassword = async function(
 UserSchema.methods.ChangedPassword = function(JWTstamp) {
   const ChangedPasswordTime = parseInt(this.PasswordChangedAt.getTime());
   JWTstamp *= 1000;
+
   // false if user did not change password after creating
   return ChangedPasswordTime > JWTstamp;
 };

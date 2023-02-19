@@ -11,3 +11,10 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.deleteAll = catchAsync(async (req, res, next) => {
+  const done = await User.deleteMany();
+  res.status(200).json({
+    status: 'success',
+  });
+});
