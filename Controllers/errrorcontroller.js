@@ -9,7 +9,7 @@ const HandleDuplicateFieldsDb = (err) => {
   const arr = Object.keys(err.keyValue),
     value = err.keyValue[arr[0]];
 
-  const message = `Duplicate field value: ${value}. Please use another value!`;
+  const message = `Duplicate field ${arr}: ${value}. Please use another ${arr}!`;
   return new AppError(message, 400);
 };
 
@@ -28,6 +28,8 @@ const HandleJWTError = () =>
 
 const HandleJWTExpired = () =>
   new AppError('This token is expired, please log in again', 401);
+
+const HandlePhoneNumber = (err) => new AppError(err.message, 401);
 
 const SendDevError = (err, res) => {
   res.status(err.statusCode).json({
@@ -65,7 +67,6 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') SendDevError(err, res);
   else if (process.env.NODE_ENV === 'production') {
     let error = { ...err };
-
     if (err.IsOperational) return SendProdError(err, res);
 
     console.log(error);
@@ -75,6 +76,12 @@ module.exports = (err, req, res, next) => {
     if (error.name === 'TokenExpiredError') error = HandleJWTExpired();
     if (error._message && error._message.startsWith('User validation failed'))
       error = HandleValidationErrorDb(error);
+    if (
+      err.message &&
+      (err.message.startsWith('Phone number is not valid.') ||
+        err.message.startsWith('Invalid country calling code'))
+    )
+      error = HandlePhoneNumber(err);
 
     SendProdError(error, res);
   }

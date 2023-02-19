@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+var mongooseIntlPhoneNumber = require('mongoose-intl-phone-number');
 
 // Schema
 const UserSchema = new mongoose.Schema({
@@ -42,6 +43,14 @@ const UserSchema = new mongoose.Schema({
     },
   },
   PasswordChangedAt: Date,
+});
+
+UserSchema.plugin(mongooseIntlPhoneNumber, {
+  hook: 'validate',
+  phoneNumberField: 'PhoneNumber',
+  nationalFormatField: 'nationalFormat',
+  internationalFormat: 'internationalFormat',
+  countryCodeField: 'countryCode',
 });
 
 UserSchema.pre('save', async function(next) {
