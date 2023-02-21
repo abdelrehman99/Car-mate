@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const CatchAsync = require('../utils/catchasync');
 const AppError = require('./../utils/apperror');
 const { promisify } = require('util');
+const catchAsync = require('../../complete-node-bootcamp-master/4-natours/after-section-11/utils/catchAsync');
+const email = require('./../utils/email');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -104,3 +106,17 @@ exports.restrictTo = (...roles) => {
     next();
   };
 };
+
+exports.forgetPassword = catchAsync(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  // check if this email exists
+  if (!user) return next(new AppError('This user email does not exist', 404));
+
+  // Generate a random reset password token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // send email to user from car mate
+  
+});

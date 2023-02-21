@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
-var mongooseIntlPhoneNumber = require('mongoose-intl-phone-number');
+const mongooseIntlPhoneNumber = require('mongoose-intl-phone-number');
+const crypto = require('crypto');
 
 // Schema
 const UserSchema = new mongoose.Schema({
@@ -48,6 +49,8 @@ const UserSchema = new mongoose.Schema({
     },
   },
   PasswordChangedAt: Date,
+  PasswordResetToken: String,
+  PasswordResetExpiry: Date,
 });
 
 UserSchema.plugin(mongooseIntlPhoneNumber, {
@@ -81,6 +84,20 @@ UserSchema.methods.ChangedPassword = function(JWTstamp) {
 
   // false if user did not change password after creating
   return ChangedPasswordTime > JWTstamp;
+};
+
+UserSchema.methods.createPasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.PasswordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  
+  // change it to minutes
+  this.PasswordResetExpiry = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 const User = mongoose.model('User', UserSchema);
