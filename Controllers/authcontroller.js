@@ -35,6 +35,7 @@ exports.signup = CatchAsync(async (req, res, next) => {
     LastName: req.body.LastName,
     PhoneNumber: req.body.PhoneNumber,
     PasswordChangedAt: new Date(),
+    role: req.body.role,
   });
 
   // newUser.save();
@@ -60,9 +61,9 @@ exports.login = CatchAsync(async (req, res, next) => {
 
 exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   let token;
-
   // check if the request has a token
   const header = req.headers.authorization;
+
   console.log(header);
   if (header && header.startsWith('Bearer')) {
     token = header.split(' ')[1];
@@ -91,3 +92,15 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   req.user = CurrentUser;
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    // roles = ['admin']
+    if (!roles.includes(req.user.role))
+      return next(
+        new AppError('This user is not allowed to perform this task', 403)
+      );
+
+    next();
+  };
+};

@@ -9,6 +9,10 @@ router.post('/login', authController.login);
 router
   .route('/')
   .get(userController.getAllUsers)
-  .delete(userController.deleteAll);
+  .delete(
+    authController.ProtectRoutes,
+    authController.restrictTo('admin'),
+    userController.deleteAll
+  );
 
 module.exports = router;
