@@ -12,7 +12,7 @@ process.on('uncaughtException', (err) => {
 const app = require('./app');
 
 // Conecting to DB
-if (process.env.NODE_ENV === 'development')
+// if (process.env.NODE_ENV === 'development')
   dotenv.config({ path: './config.env' });
 const DB = process.env.DATABASE.replace(
   '<PASSWORD>',

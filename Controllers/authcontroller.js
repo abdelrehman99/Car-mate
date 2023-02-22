@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const CatchAsync = require('../utils/catchasync');
 const AppError = require('./../utils/apperror');
 const { promisify } = require('util');
-const catchAsync = require('../../complete-node-bootcamp-master/4-natours/after-section-11/utils/catchAsync');
+const catchAsync = require('./../utils/catchasync');
 const email = require('./../utils/email');
 const crypto = require('crypto');
 
@@ -151,10 +151,10 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 exports.resetPassword = CatchAsync(async (req, res, next) => {
   // hashing the token to query on it in the database
   const hashedToken = crypto
-  .createHash('sha256')
-  .update(req.params.token)
-  .digest('hex');
-  
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
   console.log(hashedToken);
   // checking if the token is valid
   const user = await User.findOne({
