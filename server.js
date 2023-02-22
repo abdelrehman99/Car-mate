@@ -5,14 +5,15 @@ process.on('uncaughtException', (err) => {
   console.log(err.name, err.message);
   console.log('UNCAUGHT EXECPTION! Shutting down...');
 
-  // 0 for success and 1 for unhandled rejection here it's nessacry to shut down the server because the node process is not clean 
-   process.exit(1);
+  // 0 for success and 1 for unhandled rejection here it's nessacry to shut down the server because the node process is not clean
+  process.exit(1);
 });
 
 const app = require('./app');
 
 // Conecting to DB
-dotenv.config({ path: './config.env' });
+if (process.env.NODE_ENV === 'development')
+  dotenv.config({ path: './config.env' });
 const DB = process.env.DATABASE.replace(
   '<PASSWORD>',
   process.env.DATABASE_PASSWORD
