@@ -1,27 +1,27 @@
 const nodemailer = require('nodemailer');
-const CatchAsync = require('./catchasync');
 
-exports.main = CatchAsync(async (data) => {
-  // Async function enables allows handling of promises with await
-  // First, define send settings by creating a new transporter:
-  let transporter = nodemailer.createTransport({
-    host: EMAIL_HOST, // SMTP server address (usually mail.your-domain.com)
-    port: EMAIL_PORT, // Port for SMTP (usually 465)
-    secure: true, // Usually true if connecting to port 465
+const sendEmail = async (options) => {
+  // 1) Create a transporter
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
     auth: {
-      user: process.env.EMAIL_USERNAME, // Your email address
-      pass: process.env.EMAIL_PASSWORD, // Password (for gmail, your app password)
-      // ⚠️ For better security, use environment variables set on the server for these values when deploying
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD,
     },
   });
 
-  // Define and send message inside transporter.sendEmail() and await info about send from promise:
-  let info = await transporter.sendMail({
+  // 2) Define the email options
+  const mailOptions = {
     from: process.env.EMAIL_USERNAME,
-    to: data.email,
-    subject: data.subject,
-    text: data.message,
-  });
+    to: options.email,
+    subject: options.subject,
+    text: options.message,
+    // html:
+  };
 
-  console.log(info.messageId); // Random ID generated after successful send (optional)
-});
+  // 3) Actually send the email
+  await transporter.sendMail(mailOptions);
+};
+
+module.exports = sendEmail;

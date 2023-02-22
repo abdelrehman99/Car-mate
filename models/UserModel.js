@@ -67,8 +67,19 @@ UserSchema.pre('save', async function(next) {
   this.password = await bcrypt.hash(this.password, 12);
 
   this.ConfirmPassword = undefined;
+
   next();
 });
+
+UserSchema.pre('save', function (next)
+{
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // minus 1 sec because creating a token takes time 
+  this.PasswordChangedAt = Date.now() - 1000;
+
+  next();
+})
 
 UserSchema.methods.correctPassword = async function(
   candidatePassword,
@@ -94,6 +105,8 @@ UserSchema.methods.createPasswordResetToken = function() {
     .update(resetToken)
     .digest('hex');
   
+  console.log(this.PasswordResetToken);
+  console.log(resetToken);
   // change it to minutes
   this.PasswordResetExpiry = Date.now() + 10 * 60 * 1000;
 

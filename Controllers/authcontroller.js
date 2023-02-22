@@ -5,6 +5,7 @@ const AppError = require('./../utils/apperror');
 const { promisify } = require('util');
 const catchAsync = require('../../complete-node-bootcamp-master/4-natours/after-section-11/utils/catchAsync');
 const email = require('./../utils/email');
+const crypto = require('crypto');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -118,5 +119,65 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   // send email to user from car mate
+  try {
+    await email({
+      email: user.email,
+      subject: 'Your password reset token (valid for 10 min)',
+      message: `This is the password reset token \n ${resetToken} \n 
+      PLEASE do not share this token with anyone and it submit to the application`,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token is sent to email. Please check your mail and spam folder',
+    });
+  } catch (err) {
+    // reseting the password reset token in case of err
+    user.passwordResetToken = undefined;
+    user.PasswordResetExpiry = undefined;
+
+    console.error(err);
+    // not validating before saving
+    await user.save({ validateBeforeSave: false });
+    return next(
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500
+      )
+    );
+  }
+});
+
+exports.resetPassword = CatchAsync(async (req, res, next) => {
+  // hashing the token to query on it in the database
+  const hashedToken = crypto
+  .createHash('sha256')
+  .update(req.params.token)
+  .digest('hex');
   
+  console.log(hashedToken);
+  // checking if the token is valid
+  const user = await User.findOne({
+    PasswordResetToken: hashedToken,
+    PasswordResetExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError('This token is invalid or has expired', 400));
+  }
+
+  // Changing user password and reseting the password reset token
+  user.password = req.body.password;
+  user.ConfirmPassword = req.body.ConfirmPassword;
+  user.passwordResetToken = undefined;
+  user.PasswordResetExpiry = undefined;
+
+  // saving to database and if there is validation error it's caught global in CatchAsync
+  await user.save();
+
+  // creating new login token
+  const token = signToken(user._id);
+
+  // responding with token
+  respond(res, 200, user, token);
 });
