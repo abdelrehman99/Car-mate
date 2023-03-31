@@ -2,6 +2,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const products = require('./../models/ProductModel');
 const catchAsync = require('./../utils/catchasync');
+const AppError = require('./../utils/apperror');
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const product = await products.find();
@@ -11,6 +12,19 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
     data: {
       product,
     },
+  });
+});
+
+exports.getProduct = catchAsync(async (req, res, next) => {
+  const product = await products.findById(req.params.id);
+
+  if (!product) {
+    return next(new AppError('There is no product with this id', 404));
+  }
+
+  res.status(201).json({
+    status: 'success',
+    data: product,
   });
 });
 
@@ -36,6 +50,7 @@ exports.addProduct = catchAsync(async (req, res, next) => {
 const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
+  console.log(file);
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
@@ -49,13 +64,14 @@ const upload = multer({
 });
 
 exports.uploadProdcutImage = upload.fields([
-  { name: 'imagesCover', maxCount: 1 },
+  { name: 'imageCover', maxCount: 1 },
   { name: 'Images', maxCount: 5 },
 ]);
 
 exports.resizeProductImages = catchAsync(async (req, res, next) => {
-  if (!req.files.imageCover || !req.files.images) return next();
+  if (!req.files.imageCover || !req.files.Images) return next();
 
+  console.log('Done');
   // 1) Cover image
   req.body.imageCover = `Products-${req.params.id}-${Date.now()}-cover.jpeg`;
   await sharp(req.files.imageCover[0].buffer)
@@ -65,10 +81,10 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
     .toFile(`public/img/Products/${req.body.imageCover}`);
 
   // 2) Images
-  req.body.images = [];
+  req.body.Images = [];
 
   await Promise.all(
-    req.files.images.map(async (file, i) => {
+    req.files.Images.map(async (file, i) => {
       const filename = `Products-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
 
       await sharp(file.buffer)
@@ -77,7 +93,7 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
         .jpeg({ quality: 90 })
         .toFile(`public/img/Products/${filename}`);
 
-      req.body.images.push(filename);
+      req.body.Images.push(filename);
     })
   );
 
@@ -85,19 +101,25 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
 });
 
 exports.updateProduct = catchAsync(async (req, res, next) => {
-  const prodcut = await Model.findByIdAndUpdate(req.params.id, req.body, {
+  const product = await products.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
   });
 
-  if (!prodcut) {
+  if (!product) {
     return next(new AppError('No product found with that ID', 404));
+  }
+
+  console.log(product.Owner + '\n' + req.user._id);
+  // Only owner can update product (dont use == or != becuase obejctId does not work with it)
+  if (!product.Owner.equals(req.user._id)) {
+    return next(
+      new AppError('You are not allowed to update this product.', 401)
+    );
   }
 
   res.status(200).json({
     status: 'success',
-    data: {
-      data: prodcut,
-    },
+    data: product,
   });
 });

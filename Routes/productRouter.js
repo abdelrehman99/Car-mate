@@ -8,6 +8,7 @@ router.post('/add', authController.ProtectRoutes, prodcutController.addProduct);
 
 router
   .route('/:id')
+  .get(prodcutController.getProduct)
   .patch(
     authController.ProtectRoutes,
     prodcutController.uploadProdcutImage,

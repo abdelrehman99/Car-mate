@@ -67,7 +67,7 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   // check if the request has a token
   const header = req.headers.authorization;
 
-  console.log(header);
+  // console.log(header);
   if (header && header.startsWith('Bearer')) {
     token = header.split(' ')[1];
   }
@@ -84,7 +84,7 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   const CurrentUser = await User.findById(decoded.id);
   if (!CurrentUser)
     return next(new AppError('This User no longer exists', 401));
-  console.log(CurrentUser);
+  // console.log(CurrentUser);
 
   // check if the user changed his password
   if (CurrentUser.ChangedPassword(decoded.iat))
@@ -180,4 +180,20 @@ exports.resetPassword = CatchAsync(async (req, res, next) => {
 
   // responding with token
   respond(res, 200, user, token);
+});
+
+exports.updatePassword = CatchAsync(async (req, res, next) =>
+{
+  // check if user has the correct password
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password!', 400));
+  }
+
+  const user = await User.findOne({ email }).select('+password');
+
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError('Incorrect password', 401));
+  }
+  
 });
