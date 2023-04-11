@@ -123,3 +123,13 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     data: product,
   });
 });
+
+exports.deleteAll = catchAsync(async (req, res, next) =>
+{
+  const product = await products.deleteMany();
+
+  res.status(200).json({
+    status: 'success',
+    data: product,
+  });
+});

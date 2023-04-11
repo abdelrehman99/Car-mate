@@ -26,23 +26,16 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, required_msg('Name')],
   },
-  Summary: {
+  Condition: {
     type: String,
-    required: [true, required_msg('Summary')],
+    required: [true, required_msg('Condition')],
   },
   Ratings: {
     type: Number,
     default: 0,
   },
-  // handle multiple images
-  imageCover: {
-    type: String,
-    // required: [true, required_msg('imageCover')],
-  },
-  Images: {
-    type: [String],
-    // required: [true, required_msg('at least 1 Image')],
-  },
+  imageCover: String,
+  Images: [String],
   Description: {
     type: String,
     required: [true, required_msg('Description')],
@@ -73,6 +66,10 @@ const productSchema = new mongoose.Schema({
       ref: 'User',
     },
   ],
+  Type: {
+    type: String,
+    required: [true, required_msg('Type')],
+  },
 });
 
 const product = mongoose.model('product', productSchema);

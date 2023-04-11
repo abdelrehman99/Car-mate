@@ -16,6 +16,13 @@ router
     prodcutController.updateProduct
   );
 
-router.route('/').get(prodcutController.getAllProducts);
+router
+  .route('/')
+  .get(prodcutController.getAllProducts)
+  .delete(
+    authController.ProtectRoutes,
+    authController.restrictTo('admin'),
+    prodcutController.deleteAll
+  );
 
 module.exports = router;
