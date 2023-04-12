@@ -3,9 +3,38 @@ const sharp = require('sharp');
 const products = require('./../models/ProductModel');
 const catchAsync = require('./../utils/catchasync');
 const AppError = require('./../utils/apperror');
+const apiFeatures = require('./../utils/apiFeatures');
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
-  const product = await products.find();
+  const features = new apiFeatures(products.find(), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const product = await features.Query;
+
+  res.status(201).json({
+    status: 'success',
+    results: product.length,
+    data: {
+      product,
+    },
+  });
+});
+
+exports.search = catchAsync(async (req, res, next) => {
+  const features = new apiFeatures(
+    products.find({ Name: { $regex: req.body.name } }),
+    req.query
+  )
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const product = await features.Query;
+  
   res.status(201).json({
     status: 'success',
     results: product.length,
@@ -31,14 +60,14 @@ exports.getProduct = catchAsync(async (req, res, next) => {
 exports.addProduct = catchAsync(async (req, res, next) => {
   const newProduct = await products.create({
     Name: req.body.Name,
-    Summary: req.body.Summary,
+    Condition: req.body.Condition,
     Description: req.body.Description,
     Price: req.body.Price,
     Quantity: req.body.Quantity,
     Location: req.body.Location,
     Owner: req.user._id,
-    imageCover: req.body.imageCover,
-    Images: req.body.Images,
+    Type: req.body.Type,
+    createdAt: new Date(),
   });
 
   res.status(201).json({
@@ -124,8 +153,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteAll = catchAsync(async (req, res, next) =>
-{
+exports.deleteAll = catchAsync(async (req, res, next) => {
   const product = await products.deleteMany();
 
   res.status(200).json({

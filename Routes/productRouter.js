@@ -6,6 +6,9 @@ const authController = require('./../Controllers/authcontroller');
 // selling a product
 router.post('/add', authController.ProtectRoutes, prodcutController.addProduct);
 
+// searching 
+router.get('/search', prodcutController.search);
+
 router
   .route('/:id')
   .get(prodcutController.getProduct)

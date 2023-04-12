@@ -68,8 +68,13 @@ const productSchema = new mongoose.Schema({
   ],
   Type: {
     type: String,
+    enum: {
+      values: ['Car', 'Accessories', 'Car Parts'],
+      message: '{VALUE} Type must be Car, Accesssories or Car Parts',
+    },
     required: [true, required_msg('Type')],
   },
+  createdAt: Date,
 });
 
 const product = mongoose.model('product', productSchema);
