@@ -17,9 +17,7 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: 'success',
     results: product.length,
-    data: {
-      product,
-    },
+    product,
   });
 });
 
@@ -34,13 +32,11 @@ exports.search = catchAsync(async (req, res, next) => {
     .paginate();
 
   const product = await features.Query;
-  
+
   res.status(201).json({
     status: 'success',
     results: product.length,
-    data: {
-      product,
-    },
+    product,
   });
 });
 
