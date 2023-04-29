@@ -23,8 +23,8 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
 });
 
 exports.getImage = catchAsync(async (req, res, next) => {
-  const path = '/home/abdelrehman/Documents/CarMate/' + req.url;
-  // console.log(req.params.name);
+  const path = req.url;
+  console.log(path);
 
   if (!fs.existsSync(path)) {
     return next(new AppError('This image does not exist', 404));
