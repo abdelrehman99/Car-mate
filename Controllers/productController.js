@@ -4,6 +4,7 @@ const products = require('./../models/ProductModel');
 const catchAsync = require('./../utils/catchasync');
 const AppError = require('./../utils/apperror');
 const apiFeatures = require('./../utils/apiFeatures');
+const fs = require('fs');
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(products.find(), req.query)
@@ -19,6 +20,17 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
     results: product.length,
     product,
   });
+});
+
+exports.getImage = catchAsync(async (req, res, next) => {
+  const path = '/home/abdelrehman/Documents/CarMate/' + req.url;
+  // console.log(req.params.name);
+
+  if (!fs.existsSync(path)) {
+    return next(new AppError('This image does not exist', 404));
+  }
+
+  res.status(201).sendFile(path);
 });
 
 exports.search = catchAsync(async (req, res, next) => {

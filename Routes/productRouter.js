@@ -9,6 +9,9 @@ router.post('/add', authController.ProtectRoutes, prodcutController.addProduct);
 // searching 
 router.get('/search', prodcutController.search);
 
+// image 
+router.get('/public/img/Products/:name', prodcutController.getImage);
+
 router
   .route('/:id')
   .get(prodcutController.getProduct)
