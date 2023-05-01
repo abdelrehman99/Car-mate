@@ -4,7 +4,9 @@ const products = require('./../models/ProductModel');
 const catchAsync = require('./../utils/catchasync');
 const AppError = require('./../utils/apperror');
 const apiFeatures = require('./../utils/apiFeatures');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+const { raw } = require('express');
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(products.find(), req.query)
@@ -26,9 +28,9 @@ exports.getImage = catchAsync(async (req, res, next) => {
   const path = req.url;
   console.log(path);
 
-  if (!fs.existsSync(path)) {
-    return next(new AppError('This image does not exist', 404));
-  }
+  // if (!fs.existsSync(path)) {
+  //   return next(new AppError('This image does not exist', 404));
+  // }
 
   res.status(201).sendFile(path);
 });
@@ -106,34 +108,41 @@ exports.uploadProdcutImage = upload.fields([
 ]);
 
 exports.resizeProductImages = catchAsync(async (req, res, next) => {
+  // console.log(req.files);
   if (!req.files.imageCover || !req.files.Images) return next();
 
-  console.log('Done');
-  // 1) Cover image
-  req.body.imageCover = `Products-${req.params.id}-${Date.now()}-cover.jpeg`;
-  await sharp(req.files.imageCover[0].buffer)
-    .resize(2000, 1333)
-    .toFormat('jpeg')
-    .jpeg({ quality: 90 })
-    .toFile(`public/img/Products/${req.body.imageCover}`);
+  let uploadFromBuffer = (file) => {
+    return new Promise((resolve, reject) => {
+      let cld_upload_stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'foo',
+        },
+        (error, result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(error);
+          }
+        }
+      );
 
-  // 2) Images
+      streamifier.createReadStream(file).pipe(cld_upload_stream);
+    });
+  };
+
+  let result = await uploadFromBuffer(req.files.imageCover[0].buffer);
+  req.body.imageCover = result.secure_url;
+
   req.body.Images = [];
 
   await Promise.all(
-    req.files.Images.map(async (file, i) => {
-      const filename = `Products-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
-
-      await sharp(file.buffer)
-        .resize(2000, 1333)
-        .toFormat('jpeg')
-        .jpeg({ quality: 90 })
-        .toFile(`public/img/Products/${filename}`);
-
-      req.body.Images.push(filename);
+    req.files.Images.map(async (file) => {
+      result = await uploadFromBuffer(file.buffer);
+      console.log(result.secure_url);
+      req.body.Images.push(result.secure_url);
     })
   );
-
+  // console.log(result.secure_url);
   next();
 });
 

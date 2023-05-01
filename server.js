@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
 const dotenv = require('dotenv');
 
 process.on('uncaughtException', (err) => {
@@ -25,6 +26,13 @@ mongoose
   })
   .then(() => console.log('DB connection successful!'))
   .catch(() => console.log('DB not connected'));
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
 // starting a server
 const port = process.env.PORT || 3000;
