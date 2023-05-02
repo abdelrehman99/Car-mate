@@ -1,4 +1,3 @@
-
 const express = require('express');
 const authController = require('../Controllers/authcontroller');
 const userController = require('./../Controllers/usercontroller');
@@ -8,6 +7,7 @@ router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.patch('/forgetPassword', authController.forgetPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
+router.get('/:id', userController.getUser);
 
 router
   .route('/')

@@ -6,11 +6,14 @@ const authController = require('./../Controllers/authcontroller');
 // selling a product
 router.post('/add', authController.ProtectRoutes, prodcutController.addProduct);
 
-// searching 
+// searching
 router.get('/search', prodcutController.search);
 
-// image 
-router.get('/public/img/Products/:name', prodcutController.getImage);
+// image
+// router.get('/public/img/Products/:name', prodcutController.getImage);
+
+router.post('/buy/:id', authController.ProtectRoutes, prodcutController.buy);
+
 
 router
   .route('/:id')

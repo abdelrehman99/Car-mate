@@ -1,12 +1,12 @@
 const multer = require('multer');
-const sharp = require('sharp');
 const products = require('./../models/ProductModel');
 const catchAsync = require('./../utils/catchasync');
 const AppError = require('./../utils/apperror');
 const apiFeatures = require('./../utils/apiFeatures');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
-const { raw } = require('express');
+const stripe = require('stripe')(process.env.STRIPE_API_KEY);
+const User = require('./../models/UserModel');
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(products.find(), req.query)
@@ -22,17 +22,6 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
     results: product.length,
     product,
   });
-});
-
-exports.getImage = catchAsync(async (req, res, next) => {
-  const path = req.url;
-  console.log(path);
-
-  // if (!fs.existsSync(path)) {
-  //   return next(new AppError('This image does not exist', 404));
-  // }
-
-  res.status(201).sendFile(path);
 });
 
 exports.search = catchAsync(async (req, res, next) => {
@@ -78,6 +67,12 @@ exports.addProduct = catchAsync(async (req, res, next) => {
     Owner: req.user._id,
     Type: req.body.Type,
     createdAt: new Date(),
+  });
+  // console.log(req.user);
+  req.user.Owns.push(newProduct._id);
+  newUser = await User.findByIdAndUpdate(req.user._id, req.user, {
+    new: true,
+    runValidators: true,
   });
 
   res.status(201).json({
@@ -142,11 +137,18 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
       req.body.Images.push(result.secure_url);
     })
   );
-  // console.log(result.secure_url);
+
   next();
 });
 
 exports.updateProduct = catchAsync(async (req, res, next) => {
+  // Only owner can update product (dont use == or != becuase obejctId does not work with it)
+  // console.log(product.Owner + '\n' + req.user._id);
+  if (!req.user.Owns.includes(req.params.id))
+    return next(
+      new AppError('You are not allowed to update this product.', 401)
+    );
+
   const product = await products.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
@@ -156,13 +158,11 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     return next(new AppError('No product found with that ID', 404));
   }
 
-  console.log(product.Owner + '\n' + req.user._id);
-  // Only owner can update product (dont use == or != becuase obejctId does not work with it)
-  if (!product.Owner.equals(req.user._id)) {
-    return next(
-      new AppError('You are not allowed to update this product.', 401)
-    );
-  }
+  // if (!product.Owner.equals(req.user._id)) {
+  //   return next(
+  //     new AppError('You are not allowed to update this product.', 401)
+  //   );
+  // }
 
   res.status(200).json({
     status: 'success',
@@ -178,3 +178,97 @@ exports.deleteAll = catchAsync(async (req, res, next) => {
     data: product,
   });
 });
+
+exports.buy = catchAsync(async (req, res, next) => {
+  const my_product = await products.findById(req.params.id);
+
+  if (!my_product) {
+    return next(new AppError('No product found with that ID', 404));
+  }
+
+  if (req.body.Quantity > my_product.Quantity)
+    return next(new AppError('This number of products is not available', 404));
+
+  if (!req.body.success_url || !req.body.cancel_url || !req.body.Quantity)
+    return next(
+      new AppError(
+        'Please provide a success_url, cancel_url, and a Qunatity',
+        401
+      )
+    );
+
+  const stripe_product = await stripe.products.create({
+    name: my_product.Name,
+    images: [my_product.imageCover],
+    description: my_product.Description,
+  });
+
+  const price = await stripe.prices.create({
+    currency: 'usd',
+    product: stripe_product.id,
+    unit_amount: my_product.Price * 100,
+  });
+
+  const session = await stripe.checkout.sessions.create({
+    success_url: req.body.success_url,
+    cancel_url: req.body.cancel_url,
+    mode: 'payment',
+    client_reference_id: req.params.id,
+    customer_email: req.user.email,
+    line_items: [
+      {
+        price: price.id,
+        quantity: req.body.Quantity,
+      },
+    ],
+  });
+
+  console.log(session.url);
+
+  res.status(201).json({
+    message: 'success',
+    url: session.url,
+  });
+});
+
+const reference = catchAsync(async (session) => {
+  // update User
+  let user = await User.findOne(session.customer_email);
+  req.user.Purchased.push(session.client_reference_id);
+
+  await User.findByIdAndUpdate(user._id, user, {
+    new: true,
+    runValidators: true,
+  });
+
+  // Update Product
+  let product = await products.findById(session.client_reference_id);
+  product.Buyers.push(user._id);
+  product.Sold = product.Sold + session.line_items.quantity;
+  product.Quantity = product.Quantity - session.line_items.quantity;
+
+  await products.findByIdAndUpdate(product._id, product, {
+    new: true,
+    runValidators: true,
+  });
+});
+
+exports.webhook = (req, res) => {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  // Handle the event
+  console.log(`Unhandled event type ${event.type}`);
+
+  if (event.type == 'checkout.session.completed') reference(event.data.object);
+  // Return a 200 res to acknowledge receipt of the event
+  res.send(200).json({ received: true });
+};

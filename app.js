@@ -6,9 +6,15 @@ const errorhandeler = require('./Controllers/errrorcontroller');
 const app = express();
 const morgan = require('morgan');
 var cors = require('cors');
+const prodcutController = require('./Controllers/productController');
 
 // MiddleWare
 app.use(cors());
+// app.post(
+//   '/webhook',
+//   express.raw({ type: 'application/json' }),
+//   prodcutController.webhook
+// );
 app.use(express.json());
 app.use(express.static(`${__dirname}/public`));
 app.use((req, res, next) => {

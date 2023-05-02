@@ -1,5 +1,10 @@
 const AppError = require('./../utils/apperror');
 
+const HandleStripeError = (err) => {
+  const message = err.message;
+  return new AppError(message, 400);
+};
+
 const HandleCastErrorDb = (err) => {
   const message = `Invalid ${err.path}: ${err.value}.`;
   return new AppError(message, 400);
@@ -62,14 +67,14 @@ module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  console.log(err);
+  console.error(err);
 
   if (process.env.NODE_ENV === 'development') SendDevError(err, res);
   else if (process.env.NODE_ENV === 'production') {
     let error = { ...err };
     if (err.IsOperational) return SendProdError(err, res);
 
-    console.log(error);
+    // console.log(error);
     if (error.name === 'CastError') error = HandleCastErrorDb(error);
     if (error.code === 11000) error = HandleDuplicateFieldsDb(error);
     if (error.name === 'JsonWebTokenError') error = HandleJWTError();
@@ -82,6 +87,9 @@ module.exports = (err, req, res, next) => {
         err.message.startsWith('Invalid country calling code'))
     )
       error = HandlePhoneNumber(err);
+
+    console.log(error.raw);
+    if (error.raw && error.raw.message) error = HandleStripeError(error.raw);
 
     SendProdError(error, res);
   }
