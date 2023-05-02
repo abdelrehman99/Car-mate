@@ -233,6 +233,9 @@ exports.buy = catchAsync(async (req, res, next) => {
 
 const reference = catchAsync(async (session) => {
   // update User
+
+  console.log(session);
+
   let user = await User.findOne({ email: session.customer_email });
   user.Purchased.push(session.client_reference_id);
 
@@ -270,7 +273,7 @@ exports.webhook = (req, res) => {
   }
 
   // Handle the event
-  console.log(`Unhandled event type ${event.type}`);
+  console.log(event);
 
   if (event.type == 'checkout.session.completed') reference(event.data.object);
   // Return a 200 res to acknowledge receipt of the event
