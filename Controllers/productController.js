@@ -233,7 +233,7 @@ exports.buy = catchAsync(async (req, res, next) => {
 
 const reference = catchAsync(async (session) => {
   // update User
-  let user = await User.findOne(session.customer_email);
+  let user = await User.findOne({ email: session.customer_email });
   req.user.Purchased.push(session.client_reference_id);
 
   await User.findByIdAndUpdate(user._id, user, {
