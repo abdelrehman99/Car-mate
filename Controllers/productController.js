@@ -247,8 +247,9 @@ const reference = catchAsync(async (session) => {
   // Update Product
   let product = await products.findById(session.client_reference_id);
   product.Buyers.push(user._id);
-  product.Sold = product.Sold + session.line_items[0].quantity;
-  product.Quantity = product.Quantity - session.line_items[0].quantity;
+  const quantity = session.amount_total / (product.Price * 100);
+  product.Sold += quantity;
+  product.Quantity -= quantity;
 
   await products.findByIdAndUpdate(product._id, product, {
     new: true,
