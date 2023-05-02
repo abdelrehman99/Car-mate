@@ -234,7 +234,7 @@ exports.buy = catchAsync(async (req, res, next) => {
 const reference = catchAsync(async (session) => {
   // update User
   let user = await User.findOne({ email: session.customer_email });
-  req.user.Purchased.push(session.client_reference_id);
+  user.Purchased.push(session.client_reference_id);
 
   await User.findByIdAndUpdate(user._id, user, {
     new: true,
@@ -274,5 +274,5 @@ exports.webhook = (req, res) => {
 
   if (event.type == 'checkout.session.completed') reference(event.data.object);
   // Return a 200 res to acknowledge receipt of the event
-  res.send(200).json({ received: true });
+  res.status(200).json({ received: true });
 };
