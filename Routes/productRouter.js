@@ -14,7 +14,6 @@ router.get('/search', prodcutController.search);
 
 router.post('/buy/:id', authController.ProtectRoutes, prodcutController.buy);
 
-
 router
   .route('/:id')
   .get(prodcutController.getProduct)
@@ -23,7 +22,8 @@ router
     prodcutController.uploadProdcutImage,
     prodcutController.resizeProductImages,
     prodcutController.updateProduct
-  );
+  )
+  .post(authController.ProtectRoutes, prodcutController.addReview);
 
 router
   .route('/')

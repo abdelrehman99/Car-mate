@@ -8,8 +8,14 @@ const streamifier = require('streamifier');
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const User = require('./../models/UserModel');
 
+const prod = () => {
+  return process.env.NODE_ENV === 'development'
+    ? {}
+    : { Name: { $ne: 'test' } };
+};
+
 exports.getAllProducts = catchAsync(async (req, res, next) => {
-  const features = new apiFeatures(products.find(), req.query)
+  const features = new apiFeatures(products.find(prod), req.query)
     .filter()
     .sort()
     .limitFields()
@@ -44,8 +50,11 @@ exports.search = catchAsync(async (req, res, next) => {
 });
 
 exports.getProduct = catchAsync(async (req, res, next) => {
-  const product = await products.findById(req.params.id);
+  const product = await products
+    .findById(req.params.id)
+    .populate('Buyers Owner');
 
+  // product.populate()
   if (!product) {
     return next(new AppError('There is no product with this id', 404));
   }
@@ -251,10 +260,11 @@ const reference = catchAsync(async (session) => {
   product.Sold += quantity;
   product.Quantity -= quantity;
 
-  await products.findByIdAndUpdate(product._id, product, {
-    new: true,
-    runValidators: true,
-  });
+  await product.save();
+  // await products.findByIdAndUpdate(product._id, product, {
+  //   new: true,
+  //   runValidators: true,
+  // });
 });
 
 exports.webhook = (req, res) => {
@@ -277,6 +287,32 @@ exports.webhook = (req, res) => {
   console.log(event);
 
   if (event.type == 'checkout.session.completed') reference(event.data.object);
+
   // Return a 200 res to acknowledge receipt of the event
   res.status(200).json({ received: true });
 };
+
+exports.addReview = catchAsync(async (req, res, next) => {
+  if (!req.user.Purchased.includes(req.params.id))
+    return next(new AppError('You must buy the product to add a review.', 401));
+
+  let product = await products.findById(req.params.id);
+
+  if (product.Ratings[0] == 0) product.Ratings.shift();
+
+  product.Ratings.push({
+    user: req.user._id,
+    Rating: req.body.Rating,
+    Description: req.body.Description,
+  });
+  // req.body.user = ;
+  console.log(product);
+  product.RatingsSum += req.body.Rating;
+
+  await product.save();
+
+  res.status(201).json({
+    message: 'success',
+    data: product,
+  });
+});

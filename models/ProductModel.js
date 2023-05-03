@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
+// const Rating = require('./RatingModel');
 
 const required_msg = function(value) {
   return `Please provide a ${value} for your product`;
@@ -21,6 +21,15 @@ const locationSchema = new mongoose.Schema({
   // Description: String,
 });
 
+const ratingSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+  },
+  Rating: Number,
+  Description: String,
+});
+
 const productSchema = new mongoose.Schema({
   Name: {
     type: String,
@@ -30,7 +39,7 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, required_msg('Condition')],
   },
-  Ratings: {
+  RatingsAverage: {
     type: Number,
     default: 0,
   },
@@ -66,6 +75,16 @@ const productSchema = new mongoose.Schema({
       ref: 'User',
     },
   ],
+  Ratings: [
+    {
+      type: ratingSchema,
+      default: () => ({}),
+    },
+  ],
+  RatingsSum: {
+    type: Number,
+    default: 0,
+  },
   Type: {
     type: String,
     enum: {
@@ -75,6 +94,16 @@ const productSchema = new mongoose.Schema({
     required: [true, required_msg('Type')],
   },
   createdAt: Date,
+});
+
+// UserSchema.pre(/^find/, function(next) {
+//   this.populate('Owns Purchased');
+//   next();
+// });
+
+productSchema.pre('save', function(next) {
+  this.RatingsAverage = this.RatingsSum / this.Ratings.length;
+  next();
 });
 
 const product = mongoose.model('product', productSchema);

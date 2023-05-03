@@ -48,14 +48,18 @@ const UserSchema = new mongoose.Schema({
       message: 'Passwords are not the same!',
     },
   },
-  Owns: [{
-    type: mongoose.Schema.ObjectId,
-    ref: 'Product',
-  }],
-  Purchased: [{
-    type: mongoose.Schema.ObjectId,
-    ref: 'Product',
-  }],
+  Owns: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'product',
+    },
+  ],
+  Purchased: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'product',
+    },
+  ],
   PasswordChangedAt: Date,
   PasswordResetToken: String,
   PasswordResetExpiry: Date,
@@ -69,6 +73,11 @@ UserSchema.plugin(mongooseIntlPhoneNumber, {
   countryCodeField: 'countryCode',
 });
 
+UserSchema.pre(/^find/, function(next) {
+  this.populate('Owns Purchased');
+  next();
+});
+
 UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
 
@@ -79,15 +88,14 @@ UserSchema.pre('save', async function(next) {
   next();
 });
 
-UserSchema.pre('save', function (next)
-{
+UserSchema.pre('save', function(next) {
   if (!this.isModified('password') || this.isNew) return next();
 
-  // minus 1 sec because creating a token takes time 
+  // minus 1 sec because creating a token takes time
   this.PasswordChangedAt = Date.now() - 1000;
 
   next();
-})
+});
 
 UserSchema.methods.correctPassword = async function(
   candidatePassword,
@@ -112,7 +120,7 @@ UserSchema.methods.createPasswordResetToken = function() {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  
+
   console.log(this.PasswordResetToken);
   console.log(resetToken);
   // change it to minutes
