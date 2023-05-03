@@ -257,11 +257,11 @@ const reference = catchAsync(async (session) => {
   product.Sold += quantity;
   product.Quantity -= quantity;
 
-  await product.save();
-  // await products.findByIdAndUpdate(product._id, product, {
-  //   new: true,
-  //   runValidators: true,
-  // });
+  // await product.save();
+  await products.findByIdAndUpdate(product._id, product, {
+    new: true,
+    runValidators: true,
+  });
 });
 
 exports.webhook = (req, res) => {
