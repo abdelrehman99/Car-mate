@@ -18,9 +18,19 @@ const HandleDuplicateFieldsDb = (err) => {
   return new AppError(message, 400);
 };
 
-const HandleValidationErrorDb = (err) => {
+const HandleUserValidationErrorDb = (err) => {
   const errors = Object.keys(err.errors).map(
     (el) => err.errors[el].properties.message
+  );
+
+  // console.log(err.errors);
+  const message = `Inavalid input data. ${errors.join('. ')}`;
+  return new AppError(message, 400);
+};
+
+const HandleProductValidationErrorDb = (err) => {
+  const errors = Object.keys(err.errors).map(
+    (el) => err.errors[el].ValidatorError
   );
 
   // console.log(err.errors);
@@ -80,7 +90,12 @@ module.exports = (err, req, res, next) => {
     if (error.name === 'JsonWebTokenError') error = HandleJWTError();
     if (error.name === 'TokenExpiredError') error = HandleJWTExpired();
     if (error._message && error._message.startsWith('User validation failed'))
-      error = HandleValidationErrorDb(error);
+      error = HandleUserValidationErrorDb(error);
+    if (
+      error._message &&
+      error._message.startsWith('product validation failed')
+    )
+      error = HandleProductValidationErrorDb(error);
     if (
       err.message &&
       (err.message.startsWith('Phone number is not valid.') ||
@@ -88,7 +103,7 @@ module.exports = (err, req, res, next) => {
     )
       error = HandlePhoneNumber(err);
 
-    console.log(error.raw);
+    // console.log(error.raw);
     if (error.raw && error.raw.message) error = HandleStripeError(error.raw);
 
     SendProdError(error, res);

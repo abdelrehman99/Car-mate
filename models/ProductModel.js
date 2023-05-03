@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const AppError = require('../utils/apperror');
 // const Rating = require('./RatingModel');
 
 const required_msg = function(value) {
@@ -26,8 +27,16 @@ const ratingSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'User',
   },
-  Rating: Number,
-  Description: String,
+  Rating: {
+    type: Number,
+    min: 0,
+    max: 5,
+    required: [true, 'Please provide a rating'],
+  },
+  Description: {
+    type: String,
+    required: [true, 'Please provide an Description'],
+  },
 });
 
 const productSchema = new mongoose.Schema({
@@ -96,9 +105,16 @@ const productSchema = new mongoose.Schema({
   createdAt: Date,
 });
 
-// UserSchema.pre(/^find/, function(next) {
-//   this.populate('Owns Purchased');
+// productSchema.pre(/^find/, function(next) {
+//   this.populate('Buyers Owner');
 //   next();
+// });
+
+// productSchema.post(/^find/, function() {
+//   // this.populate('Buyers Owner');
+//   // console.log(this);
+//   if (!this._id) 
+//   // next();
 // });
 
 productSchema.pre('save', function(next) {

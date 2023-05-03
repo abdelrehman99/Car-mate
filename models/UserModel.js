@@ -73,10 +73,10 @@ UserSchema.plugin(mongooseIntlPhoneNumber, {
   countryCodeField: 'countryCode',
 });
 
-UserSchema.pre(/^find/, function(next) {
-  this.populate('Owns Purchased');
-  next();
-});
+// UserSchema.pre(/^find/, function(next) {
+//   this.populate('Owns Purchased');
+//   next();
+// });
 
 UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();

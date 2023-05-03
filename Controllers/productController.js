@@ -8,15 +8,11 @@ const streamifier = require('streamifier');
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const User = require('./../models/UserModel');
 
-const prod = () => {
-  return process.env.NODE_ENV === 'development'
-    ? {}
-    : { Name: { $ne: 'test' } };
-};
-
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(
-    products.find({ Name: { $ne: 'test' } }),
+    products
+      .find({ Name: { $ne: 'test' }, Quantity: { $gt: 0 } })
+      .populate('Buyers Owner'),
     req.query
   )
     .filter()
@@ -53,9 +49,7 @@ exports.search = catchAsync(async (req, res, next) => {
 });
 
 exports.getProduct = catchAsync(async (req, res, next) => {
-  const product = await products
-    .findById(req.params.id)
-    .populate('Buyers Owner');
+  const product = await products.findById(req.params.id);
 
   // product.populate()
   if (!product) {
@@ -299,7 +293,11 @@ exports.addReview = catchAsync(async (req, res, next) => {
   if (!req.user.Purchased.includes(req.params.id))
     return next(new AppError('You must buy the product to add a review.', 401));
 
+  // console.log(req.user.Purchased);
   let product = await products.findById(req.params.id);
+
+  if (!product)
+    return next(new AppError('This product does not exist', 401));
 
   if (product.Ratings[0] == 0) product.Ratings.shift();
 
