@@ -15,7 +15,10 @@ const prod = () => {
 };
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
-  const features = new apiFeatures(products.find(prod), req.query)
+  const features = new apiFeatures(
+    products.find({ Name: { $ne: 'test' } }),
+    req.query
+  )
     .filter()
     .sort()
     .limitFields()
