@@ -188,6 +188,9 @@ exports.deleteAll = catchAsync(async (req, res, next) => {
 exports.buy = catchAsync(async (req, res, next) => {
   const my_product = await products.findById(req.params.id);
 
+  if (my_product.Owner.equals(req.user._id))
+    return next(new AppError('You cannot buy your own product', 401));
+
   if (!my_product) {
     return next(new AppError('No product found with that ID', 404));
   }
@@ -296,8 +299,7 @@ exports.addReview = catchAsync(async (req, res, next) => {
   // console.log(req.user.Purchased);
   let product = await products.findById(req.params.id);
 
-  if (!product)
-    return next(new AppError('This product does not exist', 401));
+  if (!product) return next(new AppError('This product does not exist', 401));
 
   if (product.Ratings[0] == 0) product.Ratings.shift();
 

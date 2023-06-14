@@ -7,7 +7,7 @@ const authController = require('./../Controllers/authcontroller');
 router.post('/add', authController.ProtectRoutes, prodcutController.addProduct);
 
 // searching
-router.get('/search', prodcutController.search);
+router.post('/search', prodcutController.search);
 
 // image
 // router.get('/public/img/Products/:name', prodcutController.getImage);
