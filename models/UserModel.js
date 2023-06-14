@@ -60,6 +60,12 @@ const UserSchema = new mongoose.Schema({
       ref: 'product',
     },
   ],
+  Favorites: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'product',
+    },
+  ],
   PasswordChangedAt: Date,
   PasswordResetToken: String,
   PasswordResetExpiry: Date,

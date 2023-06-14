@@ -8,6 +8,11 @@ router.post('/login', authController.login);
 router.patch('/forgetPassword', authController.forgetPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 router.get('/:id', userController.getUser);
+router.patch(
+  '/Favourite/:id',
+  authController.ProtectRoutes,
+  userController.Favourite
+);
 
 router
   .route('/')
