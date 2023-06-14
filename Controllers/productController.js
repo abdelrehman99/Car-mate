@@ -249,7 +249,7 @@ exports.buy = catchAsync(async (req, res, next) => {
     line_items: items,
   });
 
-  console.log(session.url);
+  console.log(session.id);
 
   res.status(201).json({
     message: 'success',
@@ -260,7 +260,7 @@ exports.buy = catchAsync(async (req, res, next) => {
 const reference = catchAsync(async (session) => {
   // update User
 
-  console.log(session.line_items);
+  console.log(session.id);
 
   let user = await User.findOne({ email: session.customer_email });
   user.Purchased.push(session.client_reference_id);
