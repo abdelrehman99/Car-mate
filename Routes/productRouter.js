@@ -12,7 +12,7 @@ router.post('/search', prodcutController.search);
 // image
 // router.get('/public/img/Products/:name', prodcutController.getImage);
 
-router.post('/buy/:id', authController.ProtectRoutes, prodcutController.buy);
+router.post('/buy', authController.ProtectRoutes, prodcutController.buy);
 
 router
   .route('/:id')

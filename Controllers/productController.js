@@ -186,37 +186,59 @@ exports.deleteAll = catchAsync(async (req, res, next) => {
 });
 
 exports.buy = catchAsync(async (req, res, next) => {
-  const my_product = await products.findById(req.params.id);
+  let items = [];
+  await Promise.all(
+    req.body.products.map(async (product) => {
+      const my_product = await products.findById(product.id);
 
-  if (my_product.Owner.equals(req.user._id))
-    return next(new AppError('You cannot buy your own product', 401));
+      if (my_product.Owner.equals(req.user._id))
+        return next(
+          new AppError(
+            `You cannot buy your own product ${my_product.Name}`,
+            401
+          )
+        );
 
-  if (!my_product) {
-    return next(new AppError('No product found with that ID', 404));
-  }
+      if (!my_product) {
+        return next(
+          new AppError(`No product ${my_product.Name} found with that ID`, 404)
+        );
+      }
 
-  if (req.body.Quantity > my_product.Quantity)
-    return next(new AppError('This number of products is not available', 404));
+      if (product.Quantity > my_product.Quantity)
+        return next(
+          new AppError(
+            `This number of products is not available for product ${my_product.Name}`,
+            404
+          )
+        );
 
-  if (!req.body.success_url || !req.body.cancel_url || !req.body.Quantity)
-    return next(
-      new AppError(
-        'Please provide a success_url, cancel_url, and a Qunatity',
-        401
-      )
-    );
+      if (!req.body.success_url || !req.body.cancel_url || !product.Quantity)
+        return next(
+          new AppError(
+            'Please provide a success_url, cancel_url, and a Qunatity',
+            401
+          )
+        );
 
-  const stripe_product = await stripe.products.create({
-    name: my_product.Name,
-    images: [my_product.imageCover],
-    description: my_product.Description,
-  });
+      const stripe_product = await stripe.products.create({
+        name: my_product.Name,
+        images: [my_product.imageCover],
+        description: my_product.Description,
+      });
 
-  const price = await stripe.prices.create({
-    currency: 'usd',
-    product: stripe_product.id,
-    unit_amount: my_product.Price * 100,
-  });
+      const price = await stripe.prices.create({
+        currency: 'usd',
+        product: stripe_product.id,
+        unit_amount: my_product.Price * 100,
+      });
+      
+      items.push({
+        price: price.id,
+        quantity: product.Quantity,
+      });
+    })
+  );
 
   const session = await stripe.checkout.sessions.create({
     success_url: req.body.success_url,
@@ -224,12 +246,7 @@ exports.buy = catchAsync(async (req, res, next) => {
     mode: 'payment',
     client_reference_id: req.params.id,
     customer_email: req.user.email,
-    line_items: [
-      {
-        price: price.id,
-        quantity: req.body.Quantity,
-      },
-    ],
+    line_items: items,
   });
 
   console.log(session.url);
