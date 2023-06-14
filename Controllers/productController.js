@@ -7,6 +7,7 @@ const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const User = require('./../models/UserModel');
+const Cart = require('./../models/CartModel');
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(
@@ -186,7 +187,9 @@ exports.deleteAll = catchAsync(async (req, res, next) => {
 });
 
 exports.buy = catchAsync(async (req, res, next) => {
-  let items = [];
+  let items = [],
+    Products = [],
+    Quantity = [];
   await Promise.all(
     req.body.products.map(async (product) => {
       const my_product = await products.findById(product.id);
@@ -233,6 +236,9 @@ exports.buy = catchAsync(async (req, res, next) => {
         unit_amount: my_product.Price * 100,
       });
 
+      Products.push(product.id);
+      Quantity.push(product.Quantity);
+
       items.push({
         price: price.id,
         quantity: product.Quantity,
@@ -240,11 +246,17 @@ exports.buy = catchAsync(async (req, res, next) => {
     })
   );
 
+  const cart = await Cart.create({
+    Products: Products,
+    Quantity: Quantity,
+    User: req.user._id,
+  });
+
   const session = await stripe.checkout.sessions.create({
     success_url: req.body.success_url,
     cancel_url: req.body.cancel_url,
     mode: 'payment',
-    client_reference_id: req.params.id,
+    client_reference_id: String(cart._id),
     customer_email: req.user.email,
     line_items: items,
   });
@@ -263,25 +275,32 @@ const reference = catchAsync(async (session) => {
   console.log(session.id);
 
   let user = await User.findOne({ email: session.customer_email });
-  user.Purchased.push(session.client_reference_id);
+  const cart = await Cart.findById(session.client_reference_id);
+
+  cart.Products.map((product) => {
+    user.Purchased.push(product);
+  });
 
   await User.findByIdAndUpdate(user._id, user, {
     new: true,
     runValidators: true,
   });
 
-  // Update Product
-  let product = await products.findById(session.client_reference_id);
-  product.Buyers.push(user._id);
-  const quantity = session.amount_total / (product.Price * 100);
-  product.Sold += quantity;
-  product.Quantity -= quantity;
+  for (let i = 0; i < cart.Products.length; i++)
+  {
+    // Update Product
+    let product = await products.findById(cart.Products[i]);
+    product.Buyers.push(user._id);
+    const quantity = cart.Quantity[i];
+    product.Sold += quantity;
+    product.Quantity -= quantity;
 
-  // await product.save();
-  await products.findByIdAndUpdate(product._id, product, {
-    new: true,
-    runValidators: true,
-  });
+    // await product.save();
+    await products.findByIdAndUpdate(product._id, product, {
+      new: true,
+      runValidators: true,
+    });
+  }
 });
 
 exports.webhook = (req, res) => {
