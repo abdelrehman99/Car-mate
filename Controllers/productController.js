@@ -247,7 +247,6 @@ exports.buy = catchAsync(async (req, res, next) => {
     client_reference_id: req.params.id,
     customer_email: req.user.email,
     line_items: items,
-    metadata: items,
   });
 
   console.log(session.url);
@@ -261,7 +260,7 @@ exports.buy = catchAsync(async (req, res, next) => {
 const reference = catchAsync(async (session) => {
   // update User
 
-  console.log(session.metadata);
+  console.log(session.line_items);
 
   let user = await User.findOne({ email: session.customer_email });
   user.Purchased.push(session.client_reference_id);
