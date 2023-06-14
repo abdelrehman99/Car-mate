@@ -232,7 +232,7 @@ exports.buy = catchAsync(async (req, res, next) => {
         product: stripe_product.id,
         unit_amount: my_product.Price * 100,
       });
-      
+
       items.push({
         price: price.id,
         quantity: product.Quantity,
@@ -247,6 +247,7 @@ exports.buy = catchAsync(async (req, res, next) => {
     client_reference_id: req.params.id,
     customer_email: req.user.email,
     line_items: items,
+    metadata: items,
   });
 
   console.log(session.url);
@@ -260,7 +261,7 @@ exports.buy = catchAsync(async (req, res, next) => {
 const reference = catchAsync(async (session) => {
   // update User
 
-  console.log(session);
+  console.log(session.metadata);
 
   let user = await User.findOne({ email: session.customer_email });
   user.Purchased.push(session.client_reference_id);
