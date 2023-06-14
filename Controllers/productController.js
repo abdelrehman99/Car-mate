@@ -8,7 +8,7 @@ const streamifier = require('streamifier');
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const User = require('./../models/UserModel');
 const Cart = require('./../models/CartModel');
-const Factory = require('./Factory');
+// const Factory = require('./Factory');
 
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(
