@@ -210,7 +210,8 @@ const reference = catchAsync(async (session) => {
   let user = await User.findOne({
     email: session.customer_email,
   });
-  const car = await rents.findById(session.client_reference_id);
+  // const car = await rents.findById(session.client_reference_id);
+  let car = await rents.findById(session.client_reference_id);
 
   user.Rented.push(car._id);
 
@@ -219,19 +220,18 @@ const reference = catchAsync(async (session) => {
     runValidators: true,
   });
 
-  // Update Product
-  let product = await rents.findById(session.client_reference_id);
-  product.Renters.push(user._id);
-  const days = session.amount_total / (product.Price * 100);
-  product.Available = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  // Update car
+  car.Renters.push(user._id);
+  const days = session.amount_total / (car.Price * 100);
+  car.Available = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
-  await product.save();
-  // await products.findByIdAndUpdate(product._id, product, {
+  await car.save();
+  // await cars.findByIdAndUpdate(car._id, car, {
   //   new: true,
   //   runValidators: true,
   // });
-  // await product.save();
-  await rents.findByIdAndUpdate(product._id, product, {
+  // await car.save();
+  await rents.findByIdAndUpdate(car._id, car, {
     new: true,
     runValidators: true,
   });
