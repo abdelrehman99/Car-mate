@@ -5,6 +5,11 @@ const AppError = require('../utils/apperror');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
 const multer = require('multer');
+const { Configuration, OpenAIApi } = require('openai');
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
 exports.getUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).populate('Owns Purchased');
@@ -114,5 +119,19 @@ exports.updateUser = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: product,
+  });
+});
+
+exports.help = catchAsync(async (req, res, next) => {
+  if (!req.body.message)
+    return next(new AppError('Please provide a message', 404));
+  const completion = await openai.createChatCompletion({
+    model: 'gpt-3.5-turbo',
+    messages: [{ role: 'user', content: req.body.message }],
+  });
+  console.log(completion.data.choices[0].message);
+  res.status(200).json({
+    status: 'success',
+    message: completion.data.choices[0].message,
   });
 });

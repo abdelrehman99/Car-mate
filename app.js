@@ -10,6 +10,7 @@ const rentController = require('./Controllers/rentController');
 const AppError = require('./utils/apperror');
 const app = express();
 
+
 // MiddleWare
 app.use(cors());
 app.post(
@@ -29,6 +30,7 @@ app.use(morgan('dev'));
 app.use('/api/v1/users', UserRouter);
 app.use('/api/v1/prodcuts', productRouter);
 app.use('/api/v1/rents', rentRouter);
+
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
