@@ -263,7 +263,7 @@ exports.webhook = (req, res) => {
 };
 
 exports.addReview = catchAsync(async (req, res, next) => {
-  if (!req.user.Renters.includes(req.params.id))
+  if (!req.user.Rented.includes(req.params.id))
     return next(new AppError('You must rent the car to add a review.', 401));
 
   // console.log(req.user.Purchased);
