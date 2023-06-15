@@ -13,14 +13,9 @@ const app = express();
 // MiddleWare
 app.use(cors());
 app.post(
-  '/web-hook-products',
+  '/web-hook',
   express.raw({ type: 'application/json' }),
   prodcutController.webhook
-);
-app.post(
-  '/web-hook-rents',
-  express.raw({ type: 'application/json' }),
-  rentController.webhook
 );
 app.use(express.json());
 app.use(express.static(`${__dirname}/public`));

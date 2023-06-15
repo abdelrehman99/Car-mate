@@ -8,6 +8,7 @@ const streamifier = require('streamifier');
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const User = require('./../models/UserModel');
 const Cart = require('./../models/CartModel');
+const rents = require('./../models/RentModel');
 const Factory = require('./Factory');
 
 exports.search = Factory.search(products);
@@ -240,29 +241,59 @@ const reference = catchAsync(async (session) => {
   let user = await User.findOne({ email: session.customer_email });
   const cart = await Cart.findById(session.client_reference_id);
 
-  cart.Products.map((product) => {
-    user.Purchased.push(product);
-  });
+  if (cart)
+  {
+    cart.Products.map((product) => {
+      user.Purchased.push(product);
+    });
+
+    await User.findByIdAndUpdate(user._id, user, {
+      new: true,
+      runValidators: true,
+    });
+
+    for (let i = 0; i < cart.Products.length; i++) {
+      // Update Product
+      let product = await products.findById(cart.Products[i]);
+      product.Buyers.push(user._id);
+      const quantity = cart.Quantity[i];
+      product.Sold += quantity;
+      product.Quantity -= quantity;
+
+      // await product.save();
+      await products.findByIdAndUpdate(product._id, product, {
+        new: true,
+        runValidators: true,
+      });
+    }
+    return;
+  }
+  
+  let car = await rents.findById(session.client_reference_id);
+
+  user.Rented.push(car._id);
 
   await User.findByIdAndUpdate(user._id, user, {
     new: true,
     runValidators: true,
   });
 
-  for (let i = 0; i < cart.Products.length; i++) {
-    // Update Product
-    let product = await products.findById(cart.Products[i]);
-    product.Buyers.push(user._id);
-    const quantity = cart.Quantity[i];
-    product.Sold += quantity;
-    product.Quantity -= quantity;
+  // Update car
+  car.Renters.push(user._id);
+  const days = session.amount_total / (car.Price * 100);
+  car.Available = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
-    // await product.save();
-    await products.findByIdAndUpdate(product._id, product, {
-      new: true,
-      runValidators: true,
-    });
-  }
+  await car.save();
+  // await cars.findByIdAndUpdate(car._id, car, {
+  //   new: true,
+  //   runValidators: true,
+  // });
+  // await car.save();
+  await rents.findByIdAndUpdate(car._id, car, {
+    new: true,
+    runValidators: true,
+  });
+  
 });
 
 exports.webhook = (req, res) => {
@@ -274,7 +305,7 @@ exports.webhook = (req, res) => {
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.WEB_HOOK_PRODUCT_SECRET
+      process.env.WEB_HOOK_SECRET
     );
   } catch (err) {
     res.status(400).send(`Webhook Error: ${err.message}`);
