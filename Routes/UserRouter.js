@@ -21,6 +21,12 @@ router
     authController.ProtectRoutes,
     authController.restrictTo('admin'),
     userController.deleteAll
+  )
+  .patch(
+    authController.ProtectRoutes,
+    userController.uploadProdcutImage,
+    userController.resizeProductImages,
+    userController.updateUser
   );
 
 module.exports = router;

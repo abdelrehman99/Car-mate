@@ -54,6 +54,11 @@ const UserSchema = new mongoose.Schema({
       ref: 'product',
     },
   ],
+  Image: {
+    type: String,
+    default:
+      'https://console.cloudinary.com/console/c-8acfcf0047d9c387c767ec92fb5d50/media-explorer?assetId=bed4c018c59fa28a8322c1b447c03815',
+  },
   ownRents: [
     {
       type: mongoose.Schema.ObjectId,

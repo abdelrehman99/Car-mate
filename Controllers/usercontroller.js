@@ -2,6 +2,9 @@ const User = require('./../models/UserModel');
 const catchAsync = require('./../utils/catchasync');
 const Products = require('./../models/ProductModel');
 const AppError = require('../utils/apperror');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+const multer = require('multer');
 
 exports.getUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).populate('Owns Purchased');
@@ -44,5 +47,72 @@ exports.Favourite = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: 'success',
     results: user,
+  });
+});
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  console.log(file);
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Not an image! Please upload only images.', 400), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadProdcutImage = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+]);
+
+exports.resizeProductImages = catchAsync(async (req, res, next) => {
+  // console.log(req.files);
+  if (!req.files.imageCover) return next();
+
+  let uploadFromBuffer = (file) => {
+    return new Promise((resolve, reject) => {
+      let cld_upload_stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'foo',
+        },
+        (error, result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(error);
+          }
+        }
+      );
+
+      streamifier.createReadStream(file).pipe(cld_upload_stream);
+    });
+  };
+
+  let result = await uploadFromBuffer(req.files.imageCover[0].buffer);
+  req.user.Image = result.secure_url;
+  next();
+});
+
+exports.updateUser = catchAsync(async (req, res, next) => {
+  // Only owner can update product (dont use == or != becuase obejctId does not work with it)
+  // console.log(product.Owner + '\n' + req.user._id);
+
+  const product = await User.findByIdAndUpdate(req.user._id, req.user, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!product) {
+    return next(new AppError('No product found with that ID', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: product,
   });
 });
