@@ -6,15 +6,21 @@ const productRouter = require('./Routes/productRouter');
 const rentRouter = require('./Routes/RentRouter');
 const errorhandeler = require('./Controllers/errrorcontroller');
 const prodcutController = require('./Controllers/productController');
+const rentController = require('./Controllers/rentController');
 const AppError = require('./utils/apperror');
 const app = express();
 
 // MiddleWare
 app.use(cors());
 app.post(
-  '/web-hook',
+  '/web-hook-products',
   express.raw({ type: 'application/json' }),
   prodcutController.webhook
+);
+app.post(
+  '/web-hook-rents',
+  express.raw({ type: 'application/json' }),
+  rentController.webhook
 );
 app.use(express.json());
 app.use(express.static(`${__dirname}/public`));

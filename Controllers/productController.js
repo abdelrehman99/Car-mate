@@ -274,7 +274,7 @@ exports.webhook = (req, res) => {
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.WEB_HOOK_SECRET
+      process.env.WEB_HOOK_PRODUCT_SECRET
     );
   } catch (err) {
     res.status(400).send(`Webhook Error: ${err.message}`);
