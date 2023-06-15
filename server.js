@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const dotenv = require('dotenv');
 
+// console.log(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000));
+
 process.on('uncaughtException', (err) => {
   console.log(err.name, err.message);
   console.log('UNCAUGHT EXECPTION! Shutting down...');

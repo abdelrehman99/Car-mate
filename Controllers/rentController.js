@@ -1,24 +1,21 @@
-const multer = require('multer');
-const products = require('./../models/ProductModel');
+const apiFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchasync');
 const AppError = require('./../utils/apperror');
-const apiFeatures = require('./../utils/apiFeatures');
 const cloudinary = require('cloudinary').v2;
+const rents = require('./../models/RentModel');
+const User = require('./../models/UserModel');
+const Factory = require('./Factory');
 const streamifier = require('streamifier');
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
-const User = require('./../models/UserModel');
-const Cart = require('./../models/CartModel');
-const Factory = require('./Factory');
+const multer = require('multer');
 
-exports.search = Factory.search(products);
-exports.getProduct = Factory.get(products);
-exports.deleteAll = Factory.deleteAll(products);
+exports.search = Factory.search(rents);
+exports.getProduct = Factory.get(rents);
+exports.deleteAll = Factory.deleteAll(rents);
 
-exports.getAllProducts = catchAsync(async (req, res, next) => {
+exports.getAllRents = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(
-    products
-      .find({ Name: { $ne: 'test' }, Quantity: { $gt: 0 } })
-      .populate('Buyers Owner'),
+    rents.find({ Available: { $lte: new Date() } }).populate('Renters Owner'),
     req.query
   )
     .filter()
@@ -26,29 +23,28 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
     .limitFields()
     .paginate();
 
-  const product = await features.Query;
+  const rent = await features.Query;
 
   res.status(201).json({
     status: 'success',
-    results: product.length,
-    product,
+    results: rent.length,
+    rent,
   });
 });
 
-exports.addProduct = catchAsync(async (req, res, next) => {
-  const newProduct = await products.create({
+exports.addRent = catchAsync(async (req, res, next) => {
+  const newProduct = await rents.create({
     Name: req.body.Name,
     Condition: req.body.Condition,
     Description: req.body.Description,
     Price: req.body.Price,
-    Quantity: req.body.Quantity,
     Location: req.body.Location,
     Owner: req.user._id,
-    Type: req.body.Type,
+    Available: new Date(),
     createdAt: new Date(),
   });
   // console.log(req.user);
-  req.user.Owns.push(newProduct._id);
+  req.user.ownRents.push(newProduct._id);
   newUser = await User.findByIdAndUpdate(req.user._id, req.user, {
     new: true,
     runValidators: true,
@@ -123,12 +119,12 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
 exports.updateProduct = catchAsync(async (req, res, next) => {
   // Only owner can update product (dont use == or != becuase obejctId does not work with it)
   // console.log(product.Owner + '\n' + req.user._id);
-  if (!req.user.Owns.includes(req.params.id))
+  if (!req.user.ownRents.includes(req.params.id))
     return next(
       new AppError('You are not allowed to update this product.', 401)
     );
 
-  const product = await products.findByIdAndUpdate(req.params.id, req.body, {
+  const product = await rents.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
   });
@@ -137,91 +133,65 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     return next(new AppError('No product found with that ID', 404));
   }
 
-  // if (!product.Owner.equals(req.user._id)) {
-  //   return next(
-  //     new AppError('You are not allowed to update this product.', 401)
-  //   );
-  // }
-
   res.status(200).json({
     status: 'success',
     data: product,
   });
 });
 
-exports.buy = catchAsync(async (req, res, next) => {
-  let items = [],
-    Products = [],
-    Quantity = [];
-  await Promise.all(
-    req.body.products.map(async (product) => {
-      const my_product = await products.findById(product.id);
+exports.rent = catchAsync(async (req, res, next) => {
+  const product = req.body;
+  const my_product = await rents.findById(product.id);
 
-      if (!my_product) {
-        return next(
-          new AppError(`No product found with that ID`, 404)
-        );
-      }
+  if (!my_product) {
+    return next(new AppError(`No product found with that ID`, 404));
+  }
 
-      if (my_product.Owner.equals(req.user._id))
-        return next(
-          new AppError(
-            `You cannot buy your own product ${my_product.Name}`,
-            401
-          )
-        );
+  if (my_product.Owner.equals(req.user._id))
+    return next(
+      new AppError(`You cannot rent your own car ${my_product.Name}`, 401)
+    );
 
-      if (product.Quantity > my_product.Quantity)
-        return next(
-          new AppError(
-            `This number of products is not available for product ${my_product.Name}`,
-            404
-          )
-        );
+  if (my_product.Available > new Date())
+    return next(
+      new AppError(
+        `${my_product.Name} is currently rented. It's going to be available on ${my_product.Available}`,
+        404
+      )
+    );
 
-      if (!req.body.success_url || !req.body.cancel_url || !product.Quantity)
-        return next(
-          new AppError(
-            'Please provide a success_url, cancel_url, and a Qunatity',
-            401
-          )
-        );
+  if (!req.body.success_url || !req.body.cancel_url || !product.Quantity)
+    return next(
+      new AppError(
+        'Please provide a success_url, cancel_url, and a Qunatity',
+        401
+      )
+    );
 
-      const stripe_product = await stripe.products.create({
-        name: my_product.Name,
-        images: [my_product.imageCover],
-        description: my_product.Description,
-      });
+  const stripe_product = await stripe.products.create({
+    name: my_product.Name,
+    images: [my_product.imageCover],
+    description: my_product.Description,
+  });
 
-      const price = await stripe.prices.create({
-        currency: 'usd',
-        product: stripe_product.id,
-        unit_amount: my_product.Price * 100,
-      });
-
-      Products.push(product.id);
-      Quantity.push(product.Quantity);
-
-      items.push({
-        price: price.id,
-        quantity: product.Quantity,
-      });
-    })
-  );
-
-  const cart = await Cart.create({
-    Products: Products,
-    Quantity: Quantity,
-    User: req.user._id,
+  const price = await stripe.prices.create({
+    currency: 'usd',
+    product: stripe_product.id,
+    unit_amount: my_product.Price * 100,
   });
 
   const session = await stripe.checkout.sessions.create({
     success_url: req.body.success_url,
     cancel_url: req.body.cancel_url,
     mode: 'payment',
-    client_reference_id: String(cart._id),
+    client_reference_id: req.params.id,
     customer_email: req.user.email,
-    line_items: items,
+    line_items: [
+      {
+        price: price.id,
+        quantity: req.body.Quantity,
+      },
+    ],
   });
 
   console.log(session.id);
@@ -237,32 +207,36 @@ const reference = catchAsync(async (session) => {
 
   console.log(session.id);
 
-  let user = await User.findOne({ email: session.customer_email });
-  const cart = await Cart.findById(session.client_reference_id);
-
-  cart.Products.map((product) => {
-    user.Purchased.push(product);
+  let user = await User.findOne({
+    email: session.customer_email,
   });
+  const car = await rents.findById(session.client_reference_id);
+
+  user.Rented.push(car._id);
 
   await User.findByIdAndUpdate(user._id, user, {
     new: true,
     runValidators: true,
   });
 
-  for (let i = 0; i < cart.Products.length; i++) {
-    // Update Product
-    let product = await products.findById(cart.Products[i]);
-    product.Buyers.push(user._id);
-    const quantity = cart.Quantity[i];
-    product.Sold += quantity;
-    product.Quantity -= quantity;
+  // Update Product
+  let product = await rents.findById(session.client_reference_id);
+  product.Renters.push(user._id);
+  const days = session.amount_total / (product.Price * 100);
+  product.Available = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
-    // await product.save();
-    await products.findByIdAndUpdate(product._id, product, {
-      new: true,
-      runValidators: true,
-    });
-  }
+  
+
+  await product.save();
+  // await products.findByIdAndUpdate(product._id, product, {
+  //   new: true,
+  //   runValidators: true,
+  // });
+  // await product.save();
+  await rents.findByIdAndUpdate(product._id, product, {
+    new: true,
+    runValidators: true,
+  });
 });
 
 exports.webhook = (req, res) => {
@@ -291,13 +265,13 @@ exports.webhook = (req, res) => {
 };
 
 exports.addReview = catchAsync(async (req, res, next) => {
-  if (!req.user.Purchased.includes(req.params.id))
-    return next(new AppError('You must buy the product to add a review.', 401));
+  if (!req.user.Renters.includes(req.params.id))
+    return next(new AppError('You must rent the car to add a review.', 401));
 
   // console.log(req.user.Purchased);
-  let product = await products.findById(req.params.id);
+  let product = await rents.findById(req.params.id);
 
-  if (!product) return next(new AppError('This product does not exist', 401));
+  if (!product) return next(new AppError('This car does not exist', 401));
 
   if (product.Ratings[0] == 0) product.Ratings.shift();
 

@@ -1,12 +1,13 @@
 const express = require('express');
-const UserRouter = require('./Routes/UserRouter');
-const productRouter = require('./Routes/productRouter');
-const AppError = require('./utils/apperror');
-const errorhandeler = require('./Controllers/errrorcontroller');
-const app = express();
 const morgan = require('morgan');
 var cors = require('cors');
+const UserRouter = require('./Routes/UserRouter');
+const productRouter = require('./Routes/productRouter');
+const rentRouter = require('./Routes/RentRouter');
+const errorhandeler = require('./Controllers/errrorcontroller');
 const prodcutController = require('./Controllers/productController');
+const AppError = require('./utils/apperror');
+const app = express();
 
 // MiddleWare
 app.use(cors());
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
 app.use(morgan('dev'));
 app.use('/api/v1/users', UserRouter);
 app.use('/api/v1/prodcuts', productRouter);
+app.use('/api/v1/rents', rentRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

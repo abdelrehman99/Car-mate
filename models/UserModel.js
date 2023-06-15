@@ -54,6 +54,18 @@ const UserSchema = new mongoose.Schema({
       ref: 'product',
     },
   ],
+  ownRents: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'rent',
+    },
+  ],
+  Rented: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'rent',
+    },
+  ],
   Purchased: [
     {
       type: mongoose.Schema.ObjectId,
