@@ -184,7 +184,7 @@ exports.rent = catchAsync(async (req, res, next) => {
     success_url: req.body.success_url,
     cancel_url: req.body.cancel_url,
     mode: 'payment',
-    client_reference_id: req.params.id,
+    client_reference_id: req.body.id,
     customer_email: req.user.email,
     line_items: [
       {
@@ -224,8 +224,6 @@ const reference = catchAsync(async (session) => {
   product.Renters.push(user._id);
   const days = session.amount_total / (product.Price * 100);
   product.Available = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-
-  
 
   await product.save();
   // await products.findByIdAndUpdate(product._id, product, {
