@@ -266,20 +266,20 @@ exports.addReview = catchAsync(async (req, res, next) => {
   if (!req.user.Rented.includes(req.params.id))
     return next(new AppError('You must rent the car to add a review.', 401));
 
-  // console.log(req.user.Purchased);
-  let product = await rents.findById(req.params.id);
-
-  if (!product) return next(new AppError('This car does not exist', 401));
-
-  if (product.Ratings[0] == 0) product.Ratings.shift();
+    let product = await rents.findById(req.params.id);
+    
+    if (!product) return next(new AppError('This car does not exist', 401));
+    
+    console.log(product);
+  // if (product.Ratings[0] == 0) product.Ratings.shift();
 
   product.Ratings.push({
-    user: req.user._id,
+    user: req.user.id,
     Rating: req.body.Rating,
     Description: req.body.Description,
   });
   // req.body.user = ;
-  console.log(product);
+  // console.log(product);
   product.RatingsSum += req.body.Rating;
 
   await product.save();

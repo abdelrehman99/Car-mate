@@ -63,7 +63,6 @@ const rentSchema = new mongoose.Schema({
   },
   Available: {
     type: Date,
-    default: true,
   },
   Owner: {
     type: mongoose.Schema.ObjectId,
