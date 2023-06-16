@@ -23,7 +23,8 @@ const respond = (res, statusCode, user, token) => {
   } else {
     res.status(statusCode).json({
       status: 'success',
-      token,
+      token: token,
+      userId: user._id,
     });
   }
 };
@@ -182,8 +183,7 @@ exports.resetPassword = CatchAsync(async (req, res, next) => {
   respond(res, 200, user, token);
 });
 
-exports.updatePassword = CatchAsync(async (req, res, next) =>
-{
+exports.updatePassword = CatchAsync(async (req, res, next) => {
   // check if user has the correct password
   const { email, password } = req.body;
   if (!email || !password) {
@@ -195,5 +195,4 @@ exports.updatePassword = CatchAsync(async (req, res, next) =>
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect password', 401));
   }
-  
 });
