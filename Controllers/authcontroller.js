@@ -68,9 +68,10 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   // check if the request has a token
   const header = req.headers.authorization;
 
-  console.log(req.headers);
+  console.log(req.header);
   if (header && header.startsWith('Bearer')) {
     token = header.split(' ')[1];
+    cosnole.log('YES');
   }
 
   if (!token)
