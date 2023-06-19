@@ -71,14 +71,15 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   console.log(header);
   if (header && header.startsWith('Bearer')) {
     token = header.split(' ')[1];
-    console.log('YES');
+    console.log(token);
   }
 
-  if (!token)
+  if (!token) {
     console.log(token);
     return next(
       new AppError('You are not logged in please log in first.', 401)
     );
+  }
 
   // check if the token is valid
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
