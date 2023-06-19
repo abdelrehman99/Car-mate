@@ -71,7 +71,7 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   console.log(header);
   if (header && header.startsWith('Bearer')) {
     token = header.split(' ')[1];
-    cosnole.log('YES');
+    console.log('YES');
   }
 
   if (!token)
