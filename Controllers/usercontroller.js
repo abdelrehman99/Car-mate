@@ -46,8 +46,7 @@ exports.Favourite = catchAsync(async (req, res, next) => {
   // req.user.Favorites = [];
   if (!req.user.Favorites.includes(product._id))
     req.user.Favorites.push(req.params.id);
-  else 
-    req.user.Favorites.splice(req.user.Favorites.indexOf(product._id), 1);
+  else req.user.Favorites.splice(req.user.Favorites.indexOf(product._id), 1);
   const user = await User.findByIdAndUpdate(req.user._id, req.user, {
     new: true,
     runValidators: true,
@@ -136,5 +135,12 @@ exports.help = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     message: completion.data.choices[0].message,
+  });
+});
+
+exports.profile = catchAsync(async (req, res, next) => {
+  res.status(200).json({
+    status: 'success',
+    message: req.user,
   });
 });
