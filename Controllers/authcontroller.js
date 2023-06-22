@@ -85,7 +85,7 @@ exports.ProtectRoutes = CatchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // get the user belonging to the id and check if he deleted the account or not
-  const CurrentUser = await User.findById(decoded.id);
+  const CurrentUser = await User.findById(decoded.id).populate('Favorites');
   if (!CurrentUser)
     return next(new AppError('This User no longer exists', 401));
   // console.log(CurrentUser);
