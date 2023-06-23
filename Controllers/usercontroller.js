@@ -44,9 +44,16 @@ exports.Favourite = catchAsync(async (req, res, next) => {
   const product = await Products.findById(req.params.id);
   if (!product) return next(new AppError('This product does not exisit', 404));
   // req.user.Favorites = [];
-  if (!req.user.Favorites.includes(product._id))
-    req.user.Favorites.push(req.params.id);
-  else req.user.Favorites.splice(req.user.Favorites.indexOf(product._id), 1);
+  // console.log(product);
+  const idx = req.user.Favorites.findIndex((el) =>
+  {
+    console.log(el);
+    return el._id.equals(product._id);
+  });
+  console.log(idx);
+  if (idx == -1)
+    req.user.Favorites.push(req.params.id), console.log('success');
+  else req.user.Favorites.splice(idx, 1);
   const user = await User.findByIdAndUpdate(req.user._id, req.user, {
     new: true,
     runValidators: true,
