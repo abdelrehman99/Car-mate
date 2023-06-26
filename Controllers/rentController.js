@@ -9,8 +9,10 @@ const streamifier = require('streamifier');
 const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const multer = require('multer');
 
-exports.search = Factory.search(rents);
-exports.getProduct = Factory.get(rents);
+const pop = 'Renters Owner';
+
+exports.search = Factory.search(rents, pop);
+exports.getProduct = Factory.get(rents, pop);
 exports.deleteAll = Factory.deleteAll(rents);
 
 exports.getAllRents = catchAsync(async (req, res, next) => {
@@ -48,7 +50,7 @@ exports.addRent = catchAsync(async (req, res, next) => {
   newUser = await User.findByIdAndUpdate(req.user._id, req.user, {
     new: true,
     runValidators: true,
-  });
+  }).populate('Renters Owner');
 
   res.status(201).json({
     status: 'success',
@@ -266,11 +268,11 @@ exports.addReview = catchAsync(async (req, res, next) => {
   if (!req.user.Rented.includes(req.params.id))
     return next(new AppError('You must rent the car to add a review.', 401));
 
-    let product = await rents.findById(req.params.id);
-    
-    if (!product) return next(new AppError('This car does not exist', 401));
-    
-    console.log(product);
+  let product = await rents.findById(req.params.id);
+
+  if (!product) return next(new AppError('This car does not exist', 401));
+
+  console.log(product);
   // if (product.Ratings[0] == 0) product.Ratings.shift();
 
   product.Ratings.push({

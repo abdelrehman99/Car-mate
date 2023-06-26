@@ -2,10 +2,10 @@ const catchAsync = require('./../utils/catchasync');
 const AppError = require('./../utils/apperror');
 const apiFeatures = require('./../utils/apiFeatures');
 
-exports.search = (Model) =>
+exports.search = (Model, pop) =>
   catchAsync(async (req, res, next) => {
     const features = new apiFeatures(
-      Model.find({ Name: { $regex: req.body.name } }),
+      Model.find({ Name: { $regex: req.body.name } }).populate(pop),
       req.query
     )
       .filter()
@@ -22,9 +22,9 @@ exports.search = (Model) =>
     });
   });
 
-exports.get = (Model) =>
+exports.get = (Model, pop) =>
   catchAsync(async (req, res, next) => {
-    const product = await Model.findById(req.params.id);
+    const product = await Model.findById(req.params.id).populate(pop);
 
     // product.populate()
     if (!product) {
