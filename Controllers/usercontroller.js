@@ -45,14 +45,12 @@ exports.Favourite = catchAsync(async (req, res, next) => {
   if (!product) return next(new AppError('This product does not exisit', 404));
   // req.user.Favorites = [];
   // console.log(product);
-  const idx = req.user.Favorites.findIndex((el) =>
-  {
+  const idx = req.user.Favorites.findIndex((el) => {
     console.log(el);
     return el._id.equals(product._id);
   });
   console.log(idx);
-  if (idx == -1)
-    req.user.Favorites.push(req.params.id), console.log('success');
+  if (idx == -1) req.user.Favorites.push(req.params.id), console.log('success');
   else req.user.Favorites.splice(idx, 1);
   const user = await User.findByIdAndUpdate(req.user._id, req.user, {
     new: true,
@@ -116,7 +114,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
   // Only owner can update product (dont use == or != becuase obejctId does not work with it)
   // console.log(product.Owner + '\n' + req.user._id);
 
-  const product = await User.findByIdAndUpdate(req.user._id, req.user, {
+  const product = await User.findByIdAndUpdate(req.user._id, req.body, {
     new: true,
     runValidators: true,
   });

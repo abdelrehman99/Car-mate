@@ -3,9 +3,13 @@ const AppError = require('./../utils/apperror');
 const apiFeatures = require('./../utils/apiFeatures');
 
 exports.search = (Model, pop) =>
-  catchAsync(async (req, res, next) => {
+  catchAsync(async (req, res, next) =>
+  {
+    // con
     const features = new apiFeatures(
-      Model.find({ Name: { $regex: req.body.name } }).populate(pop),
+      Model.find({ Name: { $regex: req.body.name.toLowerCase() } }).populate(
+        pop
+      ),
       req.query
     )
       .filter()

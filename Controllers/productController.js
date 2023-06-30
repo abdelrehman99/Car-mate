@@ -38,7 +38,7 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
 
 exports.addProduct = catchAsync(async (req, res, next) => {
   const newProduct = await products.create({
-    Name: req.body.Name,
+    Name: req.body.Name.toLowerCase(),
     Condition: req.body.Condition,
     Description: req.body.Description,
     Price: req.body.Price,
@@ -124,11 +124,14 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
 exports.updateProduct = catchAsync(async (req, res, next) => {
   // Only owner can update product (dont use == or != becuase obejctId does not work with it)
   // console.log(product.Owner + '\n' + req.user._id);
+  console.log(req.params.id);
   if (!req.user.Owns.includes(req.params.id))
     return next(
       new AppError('You are not allowed to update this product.', 401)
     );
 
+  if (req.body.Name)
+    req.body.Name = req.body.Name.toLowerCase();
   const product = await products.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
@@ -138,11 +141,6 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     return next(new AppError('No product found with that ID', 404));
   }
 
-  // if (!product.Owner.equals(req.user._id)) {
-  //   return next(
-  //     new AppError('You are not allowed to update this product.', 401)
-  //   );
-  // }
 
   res.status(200).json({
     status: 'success',

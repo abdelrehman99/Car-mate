@@ -14,15 +14,18 @@ router.post('/search', rentController.search);
 
 router.post('/rent', authController.ProtectRoutes, rentController.rent);
 
+router.patch(
+  '/addImage/:id',
+  authController.ProtectRoutes,
+  rentController.uploadProdcutImage,
+  rentController.resizeProductImages,
+  rentController.updateProduct
+);
+
 router
   .route('/:id')
   .get(rentController.getProduct)
-  .patch(
-    authController.ProtectRoutes,
-    rentController.uploadProdcutImage,
-    rentController.resizeProductImages,
-    rentController.updateProduct
-  )
+  .patch(authController.ProtectRoutes, rentController.updateProduct)
   .post(authController.ProtectRoutes, rentController.addReview);
 
 router

@@ -36,7 +36,7 @@ exports.getAllRents = catchAsync(async (req, res, next) => {
 
 exports.addRent = catchAsync(async (req, res, next) => {
   const newProduct = await rents.create({
-    Name: req.body.Name,
+    Name: req.body.Name.toLowerCase(),
     Condition: req.body.Condition,
     Description: req.body.Description,
     Price: req.body.Price,
@@ -126,6 +126,8 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
       new AppError('You are not allowed to update this product.', 401)
     );
 
+  if (req.body.name) req.body.name = req.body.name.toLowerCase();
+  
   const product = await rents.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,

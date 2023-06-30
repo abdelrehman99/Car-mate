@@ -55,6 +55,7 @@ exports.login = CatchAsync(async (req, res, next) => {
 
   const user = await User.findOne({ email }).select('+password');
 
+  // console.log(password, user.password);
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
   }
@@ -186,16 +187,34 @@ exports.resetPassword = CatchAsync(async (req, res, next) => {
   respond(res, 200, user, token);
 });
 
-exports.updatePassword = CatchAsync(async (req, res, next) => {
+exports.changePassword = CatchAsync(async (req, res, next) => {
   // check if user has the correct password
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return next(new AppError('Please provide email and password!', 400));
+  const { newPassword, password } = req.body;
+  console.log(newPassword, password);
+  if (!newPassword || !password) {
+    return next(
+      new AppError('Please provide a new password and password!', 400)
+    );
   }
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findById(req.user._id).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect password', 401));
   }
+
+  // if (req.body.confirmPassword != password)
+  //   return next(new AppError('Password does not match Confrim password', 401));
+
+  user.password = newPassword;
+  user.ConfirmPassword = newPassword;
+
+  await user.save();
+  // await User.findByIdAndUpdate(user._id, user, {
+  //   new: true,
+  //   runValidators: true,
+  // });
+
+  const token = signToken(user._id);
+  respond(res, 201, user, token);
 });
