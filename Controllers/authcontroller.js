@@ -203,17 +203,13 @@ exports.changePassword = CatchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect password', 401));
   }
 
-  // if (req.body.confirmPassword != password)
-  //   return next(new AppError('Password does not match Confrim password', 401));
+  if (req.body.confirmPassword != newPassword)
+    return next(new AppError('Password does not match Confrim password', 401));
 
   user.password = newPassword;
   user.ConfirmPassword = newPassword;
 
   await user.save();
-  // await User.findByIdAndUpdate(user._id, user, {
-  //   new: true,
-  //   runValidators: true,
-  // });
 
   const token = signToken(user._id);
   respond(res, 201, user, token);
