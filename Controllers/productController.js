@@ -67,7 +67,9 @@ const multerFilter = (req, file, cb) => {
   console.log(file);
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
-  } else {
+  } else
+  {
+    console.error('ERROR');
     cb(new AppError('Not an image! Please upload only images.', 400), false);
   }
 };
@@ -105,8 +107,8 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
     });
   };
 
-  // console.log(req.files.imageCover[0].buffer);
   let result = await uploadFromBuffer(req.files.imageCover[0].buffer);
+  console.log(result);
   req.body.imageCover = result.secure_url;
 
   req.body.Images = [];
