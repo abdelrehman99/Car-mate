@@ -130,8 +130,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
       new AppError('You are not allowed to update this product.', 401)
     );
 
-  if (req.body.Name)
-    req.body.Name = req.body.Name.toLowerCase();
+  if (req.body.Name) req.body.Name = req.body.Name.toLowerCase();
   const product = await products.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
@@ -140,7 +139,6 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
   if (!product) {
     return next(new AppError('No product found with that ID', 404));
   }
-
 
   res.status(200).json({
     status: 'success',
@@ -157,9 +155,7 @@ exports.buy = catchAsync(async (req, res, next) => {
       const my_product = await products.findById(product.id);
 
       if (!my_product) {
-        return next(
-          new AppError(`No product found with that ID`, 404)
-        );
+        return next(new AppError(`No product found with that ID`, 404));
       }
 
       if (my_product.Owner.equals(req.user._id))
@@ -173,7 +169,7 @@ exports.buy = catchAsync(async (req, res, next) => {
       if (product.Quantity > my_product.Quantity)
         return next(
           new AppError(
-            `This number of products is not available for product ${my_product.Name}`,
+            `There is only ${my_product.Quantity} number of ${my_product.Name}, please provide a suitable amount.`,
             404
           )
         );
@@ -223,7 +219,7 @@ exports.buy = catchAsync(async (req, res, next) => {
     line_items: items,
   });
 
-  console.log(session.id);
+  // console.log(session.id);
 
   res.status(201).json({
     message: 'success',
@@ -234,16 +230,28 @@ exports.buy = catchAsync(async (req, res, next) => {
 const reference = catchAsync(async (session) => {
   // update User
 
-  console.log(session.id);
+  // console.log(session.id);
 
   let user = await User.findOne({ email: session.customer_email });
   const cart = await Cart.findById(session.client_reference_id);
+  let mp = [];
 
-  if (cart)
-  {
+  if (cart) {
     cart.Products.map((product) => {
       user.Purchased.push(product);
+      const id = product.Owner;
+      if (!mp[id]) mp[id] = product.price;
+      else mp[id] += product.price;
     });
+
+    await Promise.all(
+      Object.keys(mp).map(async (id) => {
+        let owner = await User.findAById(id);
+        owner.Balance += mp[id];
+        console.log(owner.Balance);
+        await owner.save();
+      })
+    );
 
     await User.findByIdAndUpdate(user._id, user, {
       new: true,
@@ -266,7 +274,7 @@ const reference = catchAsync(async (session) => {
     }
     return;
   }
-  
+
   let car = await rents.findById(session.client_reference_id);
 
   user.Rented.push(car._id);
@@ -291,7 +299,6 @@ const reference = catchAsync(async (session) => {
     new: true,
     runValidators: true,
   });
-  
 });
 
 exports.webhook = (req, res) => {
@@ -311,7 +318,7 @@ exports.webhook = (req, res) => {
   }
 
   // Handle the event
-  console.log(event);
+  // console.log(event);
 
   if (event.type == 'checkout.session.completed') reference(event.data.object);
 

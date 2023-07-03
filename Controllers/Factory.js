@@ -3,8 +3,7 @@ const AppError = require('./../utils/apperror');
 const apiFeatures = require('./../utils/apiFeatures');
 
 exports.search = (Model, pop) =>
-  catchAsync(async (req, res, next) =>
-  {
+  catchAsync(async (req, res, next) => {
     // con
     const features = new apiFeatures(
       Model.find({ Name: { $regex: req.body.name.toLowerCase() } }).populate(
@@ -43,7 +42,7 @@ exports.get = (Model, pop) =>
 
 exports.deleteAll = (Model) =>
   catchAsync(async (req, res, next) => {
-    const product = await Model.deleteMany();
+    const product = await Model.deleteMany({ imageCover: null });
 
     res.status(200).json({
       status: 'success',

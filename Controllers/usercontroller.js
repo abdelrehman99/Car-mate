@@ -14,6 +14,9 @@ const openai = new OpenAIApi(configuration);
 exports.getUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id).populate('Owns Purchased');
 
+  console.log(user);
+  if (!user) return next(new AppError('This User does not exisit', 404));
+
   res.status(200).json({
     message: 'success',
     data: {
