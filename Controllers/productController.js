@@ -69,7 +69,7 @@ const multerFilter = (req, file, cb) => {
     cb(null, true);
   } else
   {
-    console.error('ERROR');
+    // console.error('ERROR');
     cb(new AppError('Not an image! Please upload only images.', 400), false);
   }
 };
@@ -80,7 +80,7 @@ const upload = multer({
 });
 
 exports.uploadProdcutImage = upload.fields([
-  { name: 'imageCover', maxCount: 1, minCount : 1 },
+  { name: 'imageCover', maxCount: 1},
   { name: 'Images', maxCount: 5 },
 ]);
 
@@ -243,7 +243,7 @@ const reference = catchAsync(async (session) => {
     cart.Products.map((product) => {
       user.Purchased.push(product);
       const id = product.Owner;
-      console.log(id);
+      console.log(product);
       if (!mp[id]) mp[id] = product.price;
       else mp[id] += product.price;
     });
