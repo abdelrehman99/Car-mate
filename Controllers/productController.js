@@ -105,6 +105,7 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
     });
   };
 
+  console.log(req.files.imageCover[0].buffer);
   let result = await uploadFromBuffer(req.files.imageCover[0].buffer);
   req.body.imageCover = result.secure_url;
 
