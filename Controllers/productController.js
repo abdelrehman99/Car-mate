@@ -105,7 +105,7 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
     });
   };
 
-  console.log(req.files.imageCover[0].buffer);
+  // console.log(req.files.imageCover[0].buffer);
   let result = await uploadFromBuffer(req.files.imageCover[0].buffer);
   req.body.imageCover = result.secure_url;
 
@@ -125,7 +125,7 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
 exports.updateProduct = catchAsync(async (req, res, next) => {
   // Only owner can update product (dont use == or != becuase obejctId does not work with it)
   // console.log(product.Owner + '\n' + req.user._id);
-  console.log(req.body);
+  // console.log(req.body);
   if (!req.user.Owns.includes(req.params.id))
     return next(
       new AppError('You are not allowed to update this product.', 401)
