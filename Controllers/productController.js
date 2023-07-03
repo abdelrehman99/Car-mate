@@ -240,18 +240,18 @@ const reference = catchAsync(async (session) => {
     cart.Products.map((product) => {
       user.Purchased.push(product);
       const id = product.Owner;
+      console.log(id);
       if (!mp[id]) mp[id] = product.price;
       else mp[id] += product.price;
     });
 
-    await Promise.all(
-      Object.keys(mp).map(async (id) => {
-        let owner = await User.findById(id);
-        owner.Balance += mp[id];
-        console.log(owner.Balance);
-        await owner.save();
-      })
-    );
+    // await Promise.all(
+    //   Object.keys(mp).map(async (id) => {
+    //     let owner = await User.findById(id);
+    //     owner.Balance += mp[id];
+    //     await owner.save();
+    //   })
+    // );
 
     await User.findByIdAndUpdate(user._id, user, {
       new: true,
