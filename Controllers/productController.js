@@ -64,7 +64,7 @@ exports.addProduct = catchAsync(async (req, res, next) => {
 const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
-  console.log(req);
+  console.log(file);
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else
@@ -80,12 +80,12 @@ const upload = multer({
 });
 
 exports.uploadProdcutImage = upload.fields([
-  { name: 'imageCover', maxCount: 1 },
+  { name: 'imageCover', maxCount: 1, minCount : 1 },
   { name: 'Images', maxCount: 5 },
 ]);
 
 exports.resizeProductImages = catchAsync(async (req, res, next) => {
-  // console.log(req.files);
+  console.log("YES");
   if (!req.files.imageCover || !req.files.Images) return next();
 
   let uploadFromBuffer = (file) => {
