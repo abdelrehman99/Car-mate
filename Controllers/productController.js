@@ -124,7 +124,7 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
 exports.updateProduct = catchAsync(async (req, res, next) => {
   // Only owner can update product (dont use == or != becuase obejctId does not work with it)
   // console.log(product.Owner + '\n' + req.user._id);
-  console.log(req.params.id);
+  console.log(req.body);
   if (!req.user.Owns.includes(req.params.id))
     return next(
       new AppError('You are not allowed to update this product.', 401)

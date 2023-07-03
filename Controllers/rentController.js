@@ -145,6 +145,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
 
 exports.rent = catchAsync(async (req, res, next) => {
   const product = req.body;
+  console.log(product.id);
   const my_product = await rents.findById(product.id);
 
   if (!my_product) {
