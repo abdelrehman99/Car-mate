@@ -246,7 +246,7 @@ const reference = catchAsync(async (session) => {
 
     await Promise.all(
       Object.keys(mp).map(async (id) => {
-        let owner = await User.findAById(id);
+        let owner = await User.findById(id);
         owner.Balance += mp[id];
         console.log(owner.Balance);
         await owner.save();
