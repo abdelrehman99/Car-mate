@@ -61,6 +61,10 @@ const rentSchema = new mongoose.Schema({
     type: locationSchema,
     required: [true, required_msg('Location')],
   },
+  Rented: {
+    type: Number,
+    default: 0,
+  },
   Available: {
     type: Date,
   },

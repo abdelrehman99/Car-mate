@@ -242,10 +242,6 @@ const reference = catchAsync(async (session) => {
   if (cart) {
     cart.Products.map((product) => {
       user.Purchased.push(product);
-      const id = product.Owner;
-      console.log(product);
-      if (!mp[id]) mp[id] = product.price;
-      else mp[id] += product.price;
     });
 
     // await Promise.all(
@@ -291,6 +287,7 @@ const reference = catchAsync(async (session) => {
   car.Renters.push(user._id);
   const days = session.amount_total / (car.Price * 100);
   car.Available = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  car.Rented += days;
 
   await car.save();
   // await cars.findByIdAndUpdate(car._id, car, {

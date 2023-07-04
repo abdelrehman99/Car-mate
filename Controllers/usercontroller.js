@@ -1,6 +1,7 @@
 const User = require('./../models/UserModel');
 const catchAsync = require('./../utils/catchasync');
 const Products = require('./../models/ProductModel');
+const Rents = require('./../models/RentModel');
 const AppError = require('../utils/apperror');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
@@ -147,6 +148,22 @@ exports.help = catchAsync(async (req, res, next) => {
 });
 
 exports.profile = catchAsync(async (req, res, next) => {
+  let bal = 0;
+  await Promise.all(
+    req.user.Owns.map(async (id) => {
+      const product = await Products.findById(id);
+      if (product) bal += product.Sold * product.Price;
+      // console.log(product.Sold, bal);
+    })
+  );
+  await Promise.all(
+    req.user.ownRents.map(async (id) => {
+      const rent = await Rents.findById(id);
+      if (rent && rent.Rented) bal += rent.Rented * rent.Price;
+    })
+  );
+  console.log(bal);
+  req.user.Balance = bal;
   res.status(200).json({
     status: 'success',
     message: req.user,
