@@ -65,10 +65,12 @@ const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
   console.log(file);
-  if (file.mimetype.startsWith('image')) {
+  if (
+    file.mimetype.startsWith('image') ||
+    file.mimetype.startsWith('application/octet-stream')
+  ) {
     cb(null, true);
-  } else
-  {
+  } else {
     // console.error('ERROR');
     cb(new AppError('Not an image! Please upload only images.', 400), false);
   }
@@ -80,12 +82,12 @@ const upload = multer({
 });
 
 exports.uploadProdcutImage = upload.fields([
-  { name: 'imageCover', maxCount: 1},
+  { name: 'imageCover', maxCount: 1 },
   { name: 'Images', maxCount: 5 },
 ]);
 
 exports.resizeProductImages = catchAsync(async (req, res, next) => {
-  console.log("YES");
+  console.log('YES');
   if (!req.files.imageCover || !req.files.Images) return next();
 
   let uploadFromBuffer = (file) => {
