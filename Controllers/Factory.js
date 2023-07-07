@@ -27,7 +27,14 @@ exports.search = (Model, pop) =>
 
 exports.get = (Model, pop) =>
   catchAsync(async (req, res, next) => {
-    const product = await Model.findById(req.params.id).populate(pop);
+    const product = await Model.findById(req.params.id).populate({
+      path: 'Ratings',
+      model: Model,
+      populate: {
+        path: 'user',
+        model: 'User',
+      },
+    });
 
     // product.populate()
     if (!product) {
