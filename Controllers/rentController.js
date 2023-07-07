@@ -12,8 +12,9 @@ const multer = require('multer');
 const pop = 'Renters Owner';
 
 exports.search = Factory.search(rents, pop);
-exports.getProduct = Factory.get(rents, pop);
 exports.deleteAll = Factory.deleteAll(rents);
+
+exports.getProduct = Factory.get(rents, pop);
 
 exports.getAllRents = catchAsync(async (req, res, next) => {
   const features = new apiFeatures(
@@ -127,7 +128,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     );
 
   if (req.body.name) req.body.name = req.body.name.toLowerCase();
-  
+
   const product = await rents.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
