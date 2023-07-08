@@ -21,7 +21,7 @@ const UserSchema = new mongoose.Schema({
   },
   Balance: {
     type: Number,
-    default: 0
+    default: 0,
   },
   role: {
     type: String,
@@ -61,7 +61,7 @@ const UserSchema = new mongoose.Schema({
   Image: {
     type: String,
     default:
-      'https://console.cloudinary.com/console/c-8acfcf0047d9c387c767ec92fb5d50/media-explorer?assetId=bed4c018c59fa28a8322c1b447c03815',
+      'https://res.cloudinary.com/dgm5exhj4/image/upload/v1686794699/vf8fzvptcgbobt1z0u0i.avif',
   },
   ownRents: [
     {
