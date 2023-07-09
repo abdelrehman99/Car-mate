@@ -70,8 +70,10 @@ const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
   console.log(file);
-  if (file.mimetype.startsWith('image') ||
-    file.mimetype.startsWith('application/octet-stream') ){
+  if (
+    file.mimetype.startsWith('image') ||
+    file.mimetype.startsWith('application/octet-stream')
+  ) {
     cb(null, true);
   } else {
     cb(new AppError('Not an image! Please upload only images.', 400), false);
@@ -164,9 +166,12 @@ exports.profile = catchAsync(async (req, res, next) => {
     })
   );
   console.log(bal);
-  req.user.Balance = bal;
+  const user = await User.findById(req.user._id).populate(
+    'Owns ownRents Rented Purchased Favorites'
+    );
+    user.Balance = bal;
   res.status(200).json({
     status: 'success',
-    message: req.user,
+    message: user,
   });
 });

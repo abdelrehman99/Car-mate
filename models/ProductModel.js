@@ -50,7 +50,7 @@ const productSchema = new mongoose.Schema({
   },
   RatingsAverage: {
     type: Number,
-    default: 0,
+    default: 0.0,
   },
   imageCover: String,
   Images: [String],
